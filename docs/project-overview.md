@@ -28,10 +28,14 @@ must preserve:
 
 In scope for v1: cluster and node management; deploying apps from Git
 (GitHub, GitHub Enterprise Server, GitLab, Gitea), Dockerfiles, buildpacks or
-images; domains with automatic TLS; databases (PostgreSQL, MySQL, MongoDB, Redis)
-with encrypted backups to S3-compatible storage and restore; cron jobs; Docker
-Compose stacks and a template library; teams with role-based access and an audit
-log; notifications; Cloudflare DNS, wildcard certificates, Tunnel and R2.
+images, with watch paths for monorepos, cancellable deployments and live build
+logs; preview deployments for pull requests; domains with automatic TLS or an
+uploaded certificate; databases (PostgreSQL, MySQL, MongoDB, Redis) with
+encrypted backups to S3-compatible storage and restore; volume backups; cron
+jobs; Docker Compose stacks and a template library; project-level shared
+variables; teams with role-based access, two-factor authentication, API tokens
+for CI and an audit log; notifications, including CPU and memory alerts;
+Cloudflare DNS, wildcard certificates, Tunnel and R2.
 
 Forgejo is supported on a best-effort basis through the Gitea integration.
 

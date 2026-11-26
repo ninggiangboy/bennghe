@@ -14,7 +14,7 @@ created: 2026-11-26
 
 ## Overview
 
-PaaS mã nguồn mở (AGPL-3.0) tự cài: một control plane Go + React quản lý nhiều cụm Docker Swarm trên WireGuard, deploy app/compose, database, backup S3/R2, cron, team/RBAC và tích hợp Cloudflare. Bản HTML đầy đủ: [plan.html](./plan.html) (chưa cập nhật phần bổ sung từ Dokploy ngày 2026-11-26; `plan.md` và các phase file là nguồn chính).
+PaaS mã nguồn mở (AGPL-3.0) tự cài: một control plane Go + React quản lý nhiều cụm Docker Swarm trên WireGuard, deploy app/compose, database, backup S3/R2, cron, team/RBAC và tích hợp Cloudflare. Bản HTML đầy đủ: [plan.html](./plan.html).
 
 Nguồn: [brainstorm](../reports/brainstorm-261126-1114-self-hosted-paas.md), phần tư vấn đã xác nhận ngày 2026-11-26, research: [hạ tầng](./research/researcher-01-infra-runtime-report.md), [tích hợp](./research/researcher-02-integrations-report.md).
 
@@ -217,11 +217,50 @@ Docker Engine (Swarm mode, API ≥ 1.44, backend iptables), WireGuard, Traefik v
 - Reconciled stale references: 6 (GHES "chốt ở validate" phase 6; Forgejo test phase 6; GC phase 5; template phase 9; rủi ro Traefik phase 4; prefix/tên ở mọi phase).
 - Unresolved contradictions: 0.
 
+### Session 2 — 2026-11-26 (bổ sung từ so sánh Dokploy)
+**Trigger:** validate phần bổ sung sau red-team (người dùng yêu cầu cập nhật đầy đủ).
+**Questions asked:** 3
+
+#### Verification Results
+- **Tier:** Full (12 phase); red-team đã kiểm claim, phiên này chỉ xử lý các `[UNVERIFIED]` mới.
+- **Claims checked:** 8
+- **Verified:** 6 | **Failed:** 0 | **Unverified:** 2
+- Đã xác nhận bằng tài liệu chính thức: rule `ClientIP` + `!` của Traefik v3; trường `user` của webhook merge request GitLab; trường `sender` của webhook pull_request Gitea; endpoint compare và collaborator permission của Gitea 1.22; giới hạn 300 file của GitHub compare.
+- Còn `[UNVERIFIED]`: quyền tối thiểu của GitHub App cho endpoint collaborator permission (kiểm trên org thử, phase 11); Traefik thấy IP overlay của task preview qua VIP (lab, phase 11).
+
+#### Questions & Answers
+
+1. **[Security]** Có chặn preview zone cùng registrable domain với control plane không?
+   - Options: Từ chối (Recommended) | Chỉ cảnh báo
+   - **Answer:** Chỉ cảnh báo
+   - **Rationale:** người dùng không bắt buộc có domain riêng cho preview; cookie `__Host-` giảm rủi ro chính.
+2. **[Tradeoffs]** buildkitd riêng cho preview chạy thế nào?
+   - Options: Bật khi cần (Recommended) | Chạy thường trực
+   - **Answer:** Bật khi cần
+   - **Rationale:** tiết kiệm RAM trên build node nhỏ; build preview đầu tiên chậm vài giây.
+3. **[Architecture]** Push tới app đang bị tạm dừng để backup volume?
+   - Options: Deploy chờ backup xong (Recommended) | Huỷ backup, deploy ngay
+   - **Answer:** Deploy chờ backup xong
+   - **Rationale:** backup luôn nhất quán; trễ tối đa bằng thời gian tạm dừng.
+
+#### Confirmed Decisions
+- Preview zone cùng registrable domain: chỉ cảnh báo (đảo đề xuất của red-team #13 theo quyết định người dùng).
+- buildkitd preview: bật khi cần, dừng sau 10 phút rảnh.
+- Backup volume có lease: deploy chờ.
+
+#### Impact on Phases
+- Phase 11: cảnh báo thay cho chặn zone; buildkitd bật khi cần; cập nhật trạng thái xác minh.
+- Phase 6: endpoint compare Gitea và giới hạn 300 file đã xác minh.
+- Phase 7: ghi rõ deploy chờ tối đa bằng thời gian tạm dừng.
+
+### Whole-Plan Consistency Sweep (Validation Session 2)
+- Files reread: plan.md, phase-01 … phase-12.
+- Decision deltas checked: 3.
+- Reconciled stale references: 2 (tiêu chí "bị từ chối" của zone ở phase 11; danh sách `[UNVERIFIED]` ở Open Questions).
+- Unresolved contradictions: 0.
+
 ## Open Questions
 
-- Phần bổ sung từ Dokploy (2026-11-26) đã qua red-team nhưng **chưa chạy bước validate** (người dùng yêu cầu commit ngay); chạy `/ak-plan validate` trước khi cook phase 11.
-- `[UNVERIFIED]` mới: quyền App GitHub cho endpoint collaborator permission; endpoint permission/compare trên Gitea bản thấp nhất; người đẩy commit trong payload GitLab/Gitea; Traefik `ClientIP` thấy IP overlay của task preview.
-
-Không còn câu hỏi chặn. Ba điểm `[UNVERIFIED]` được kiểm trong phase sở hữu.
+Không còn câu hỏi chặn. Các điểm `[UNVERIFIED]` được kiểm trong phase sở hữu: ba điểm của plan gốc (phase 3, 6) và hai điểm của phần bổ sung (quyền tối thiểu của GitHub App cho endpoint collaborator permission; Traefik thấy IP overlay của task preview khi đi qua VIP của Swarm — phase 11).
 
 <!-- slug: self-hosted-paas-v1 -->
