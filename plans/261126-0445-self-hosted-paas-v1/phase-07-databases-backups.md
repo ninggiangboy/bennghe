@@ -28,22 +28,22 @@ Tạo Postgres, MySQL, MongoDB, Redis bằng một thao tác trong network riên
 - **Restore:** tạo database mới cùng engine/phiên bản, chạy job `restic dump` đổ vào client tương ứng; không ghi đè database đang chạy.
 - **Backup volume** của app: `restic backup` thư mục volume mount read-only; UI ghi rõ không đảm bảo nhất quán khi đang ghi.
   - **Tuỳ chọn "dừng service trong lúc backup"** (mặc định tắt, UI cảnh báo có downtime): cờ `stop_service` và thời gian tạm dừng tối đa (mặc định 30 phút) nằm trong mục lịch đã ký gửi tới manager (phase 8), nên chạy được khi control plane offline. **Agent đang chạy scheduler** điều phối toàn bộ, job backup không có quyền gọi Docker API: (1) ghi một lease cục bộ trong bbolt và nhãn service `bn.backup.paused_until=<deadline>`, (2) scale service về 0 và chờ task dừng hẳn, (3) chạy job restic, (4) **luôn** scale về số replica của desired state hiện tại (không phải số đã ghi trước đó) kể cả khi restic lỗi, rồi gỡ lease; kết quả giữ mã thoát của restic. Reconciler trên leader tôn trọng nhãn `bn.backup.paused_until` cho tới deadline mà không cần control plane; quá deadline thì reconciler khôi phục replica và phát `backup.failed`. Deployment của app tới trong lúc có lease sẽ chờ trong hàng đợi tuần tự của app cho tới khi lease được gỡ (tối đa bằng thời gian tạm dừng). <!-- Updated: Validation Session 2 - deploy chờ backup xong --> Agent chết giữa chừng thì scheduler tiếp quản (phase 8) đọc nhãn, khôi phục replica và báo kết quả. <!-- Updated: Dokploy comparison 2026-11-26 --> <!-- Red Team (Dokploy): 10 -->
-- **`internal/agent/jobs` — một quy tắc giữ lại duy nhất** (phase 8 dùng chung): service job đã xong được giữ làm dấu chống chạy trùng trong `max(10 phút, 2 × chu kỳ lịch)` rồi mới xoá. Spec job mang label `bn.job.schedule`, `bn.job.scheduled_at`, `bn.job.deadline` để bất kỳ agent manager nào cũng nhận lại được job. Kết quả gửi với event id = tên service (idempotent). <!-- Red Team: G -->
+- **`crates/agent/src/jobs` — một quy tắc giữ lại duy nhất** (phase 8 dùng chung): service job đã xong được giữ làm dấu chống chạy trùng trong `max(10 phút, 2 × chu kỳ lịch)` rồi mới xoá. Spec job mang label `bn.job.schedule`, `bn.job.scheduled_at`, `bn.job.deadline` để bất kỳ agent manager nào cũng nhận lại được job. Kết quả gửi với event id = tên service (idempotent). <!-- Red Team: G -->
 - `backup_runs(status, size, duration, snapshot_id, log, skipped_reason)`.
 - **RBAC/audit/sự kiện:** route database, liên kết, mở public, đích backup, backup tay, restore, recovery kit có `x-permission` + audit; phát `backup.succeeded|failed` qua `events.Emit`. <!-- Red Team: C -->
 
 ## Files to Create / Modify
 - Create: `images/ops/Dockerfile`, `images/ops/scripts/` (backup/restore theo engine)
-- Create: `internal/cp/databases/`, `internal/cp/backups/` (đích, credential → Swarm secret, khoá theo repo, prune, recovery kit)
-- Create: `internal/agent/jobs/` (chạy replicated-job, theo dõi, giữ lại theo quy tắc, nhận lại job theo label)
+- Create: `crates/cp/src/databases/`, `crates/cp/src/backups/` (đích, credential → Swarm secret, khoá theo repo, prune, recovery kit)
+- Create: `crates/agent/src/jobs/` (chạy replicated-job, theo dõi, giữ lại theo quy tắc, nhận lại job theo label)
 - Create: `migrations/<timestamp>_databases_backups.sql`
-- Modify: `internal/cp/servicespec/`, `proto/agent/v1/agent.proto` (job, kết quả job, secret ops), `api/openapi.yaml`, `internal/cp/rbac/policy.go`, `web/src/routes/databases/*`, `web/src/routes/settings/backup-destinations*` <!-- Red Team: N -->
+- Modify: `crates/cp/src/servicespec/`, `proto/agent/v1/agent.proto` (job, kết quả job, secret ops), `api/openapi.yaml`, `crates/cp/src/rbac/policy.rs`, `web/src/routes/databases/*`, `web/src/routes/settings/backup-destinations*` <!-- Red Team: N -->
 
 ## Tasks & Steps
 1. Spec database 4 engine + network riêng + secret.
 2. Liên kết app (secret env), mở public có allowlist.
 3. Ops image + script.
-4. `internal/agent/jobs` với quy tắc giữ lại và nhận lại.
+4. `crates/agent/src/jobs` với quy tắc giữ lại và nhận lại.
 5. Đích backup, credential → Swarm secret, backup tay.
 6. Prune tách riêng + khoá theo repo.
 7. Restore; recovery kit có RBAC; backup volume (kể cả tuỳ chọn dừng service).

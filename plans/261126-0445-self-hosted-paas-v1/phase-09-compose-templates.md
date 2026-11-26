@@ -3,7 +3,7 @@ phase: 9
 title: "Compose & Templates"
 status: pending
 priority: P2
-effort: "2.4w"
+effort: "4.4w"
 dependencies: [6, 7]
 ---
 
@@ -13,7 +13,7 @@ dependencies: [6, 7]
 Deploy stack từ docker-compose (dán vào hoặc lấy từ Git) lên Swarm sau một bước biến đổi **dùng chung quy tắc của `servicespec`** (kiểm duyệt, route, secret, network, MTU, ghim volume), có cập nhật tuần tự và rollback theo revision; thư viện template cài bằng một thao tác.
 
 ## Requirements
-- Parse bằng `compose-spec/compose-go` v2.
+- **Parse bằng bộ đọc compose tự viết** (`crates/cp/src/compose/`), vì Rust không có tương đương `compose-go`: `docker-compose-types` chỉ cung cấp kiểu dữ liệu, `compose-spec` không được cập nhật từ 2024-10, và không crate nào làm nội suy hay gộp. Đọc YAML bằng `serde_norway` (nhánh nối tiếp của `serde_yaml` đã ngừng) hoặc `saphyr`, chốt khi bắt đầu phase. **Tập con được hỗ trợ**, ghi trong tài liệu và kiểm trong CI: nội suy `${VAR}`, `${VAR:-x}`, `${VAR:?lỗi}`, `$$`; neo/alias YAML và khoá gộp `<<`; phần mở rộng `x-*` bị bỏ qua; `services`, `networks`, `volumes`, `secrets`, `configs`, `deploy`. **Từ chối rõ ràng** (thông báo nêu tên tính năng): `extends`, `include`, `profiles`, nhiều file compose, `env_file` ngoài template. Kiểm bằng **so sánh vi sai**: CI chạy `docker compose config` thật trên cùng bộ fixture và so kết quả đã chuẩn hoá với bộ đọc của ta; khác nhau thì CI đỏ. Bước deploy vẫn do `docker stack deploy` của Docker CLI thực hiện nên đây là lớp kiểm cuối. Effort tăng 2 tuần so với bản Go (ước tính, chưa kiểm chứng). <!-- Updated: Rust 2026-11-26 -->
 - **Biến đổi** (gọi helper của `servicespec`, không tự sinh quy tắc riêng): <!-- Red Team: N, E, F -->
   - Chạy chính sách kiểm duyệt của phase 5 trên từng service (bind mount, `cap_add`, `privileged`, host network, volume `external`, placement); vi phạm thì từ chối, trừ khi admin bật `privileged` cho stack. Route bật `privileged` cho stack có `reauth: true` (phase 1). <!-- Red Team (Dokploy): 9 -->
   - **Xoá mọi label `traefik.*` người dùng viết**; route lấy từ bảng `domains` (owner_type `stack_service`) và được agent ingress sinh như app.
@@ -24,7 +24,7 @@ Deploy stack từ docker-compose (dán vào hoặc lấy từ Git) lên Swarm sa
   - Thêm constraint `bn.ready`; trường Swarm bỏ qua (`container_name`, `depends_on` có điều kiện...) thì cảnh báo.
 - **Deploy:** agent leader chạy `docker stack deploy --with-registry-auth --prune -c <file> <stack>` với file đã biến đổi, rồi xoá file khỏi đĩa ngay sau đó. Các lần deploy của cùng một stack chạy tuần tự như app (phase 5). <!-- Red Team: A -->
 - **Revision:** mỗi lần deploy lưu một `stack_revisions`; rollback = deploy lại revision trước.
-- **Stack từ Git:** dùng kết nối provider phase 6; webhook do `internal/cp/webhooks` quản lý với owner là stack; xoá stack hoặc đổi repo thì gỡ webhook. <!-- Red Team: N -->
+- **Stack từ Git:** dùng kết nối provider phase 6; webhook do `crates/cp/src/webhooks` quản lý với owner là stack; xoá stack hoặc đổi repo thì gỡ webhook. <!-- Red Team: N -->
 - **Template:** `templates/<name>/compose.yaml` + `template.yaml` (tên, mô tả, icon, biến có generator: password, domain, email, base64, uuid, jwt), nhúng vào binary. Bộ v1 gồm 10 template: n8n, WordPress+MySQL, Plausible, Uptime Kuma, Gitea, MinIO, Metabase, Ghost, Umami, Vaultwarden. <!-- Updated: Validation Session 1 - bộ 10 template --> Mỗi template phải qua biến đổi mà không cần `privileged`.
 - **Generator bổ sung:** `base64{bytes: N}` (N byte ngẫu nhiên mã hoá base64), `uuid` (UUID v4), `jwt{secret: <tên biến password/base64>, payload: {...}}` (ký HS256 bằng giá trị của một biến không phải `jwt` trong cùng template, không có hạn dùng vì giá trị không được sinh lại; dùng cho khoá anon/service của Supabase, Appwrite...). Mọi giá trị sinh ra một lần lúc cài, được coi là bí mật (Swarm secret theo quy tắc ở trên) và không sinh lại khi redeploy; generator tham chiếu biến không tồn tại hoặc biến `jwt` khác thì template bị từ chối khi nạp (kiểm trong CI cho mọi template nhúng). Env của stack dùng được `${{project.KEY}}` như app (phase 5). <!-- Updated: Dokploy comparison 2026-11-26 --> <!-- Red Team (Dokploy): 15 -->
 - **Watch paths cho stack từ Git:** cột `stacks.watch_paths` với cùng quy tắc của phase 6; base là commit của `stack_revisions` `healthy` gần nhất (mỗi revision lưu `source_sha`). <!-- Red Team (Dokploy): 15 -->
@@ -32,10 +32,10 @@ Deploy stack từ docker-compose (dán vào hoặc lấy từ Git) lên Swarm sa
 - UI: tạo stack, xem cảnh báo biến đổi, danh sách service, log; thư viện template có form biến.
 
 ## Files to Create / Modify
-- Create: `internal/cp/compose/` (parse, transform gọi `servicespec`), `internal/cp/stacks/`, `internal/cp/templates/`, `templates/n8n/`, `templates/<khác>/`
-- Create: `internal/agent/stacks/`
+- Create: `crates/cp/src/compose/` (parse, transform gọi `servicespec`), `crates/cp/src/stacks/`, `crates/cp/src/templates/`, `templates/n8n/`, `templates/<khác>/`
+- Create: `crates/agent/src/stacks/`
 - Create: `migrations/<timestamp>_stacks_templates.sql`
-- Modify: `internal/cp/servicespec/`, `internal/cp/domains/` (owner `stack_service`), `internal/cp/webhooks/`, `internal/cp/deploy/` (tuần tự hoá cho stack), `proto/agent/v1/agent.proto`, `api/openapi.yaml`, `internal/cp/rbac/policy.go`, `web/src/routes/stacks/*`, `web/src/routes/templates/*` <!-- Red Team: N -->
+- Modify: `crates/cp/src/servicespec/`, `crates/cp/src/domains/` (owner `stack_service`), `crates/cp/src/webhooks/`, `crates/cp/src/deploy/` (tuần tự hoá cho stack), `proto/agent/v1/agent.proto`, `api/openapi.yaml`, `crates/cp/src/rbac/policy.rs`, `web/src/routes/stacks/*`, `web/src/routes/templates/*` <!-- Red Team: N -->
 
 ## Tasks & Steps
 1. Parse + transform qua helper `servicespec` (golden test).
@@ -47,6 +47,7 @@ Deploy stack từ docker-compose (dán vào hoặc lấy từ Git) lên Swarm sa
 7. RBAC/audit; UI.
 
 ## Todo
+- [ ] Bộ đọc compose tự viết (tập con, từ chối rõ ràng phần còn lại) + so sánh vi sai với `docker compose config` trong CI
 - [ ] Transform qua servicespec (admission, route, network, MTU)
 - [ ] Build service có build:
 - [ ] Ghim volume + stop-first, secret placeholder

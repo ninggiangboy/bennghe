@@ -3,7 +3,7 @@ phase: 3
 title: "Cluster Networking"
 status: pending
 priority: P1
-effort: "2.5w"
+effort: "2.8w"
 dependencies: [2]
 ---
 
@@ -14,7 +14,7 @@ Node trong một cụm (có thể khác nhà cung cấp) được nối bằng W
 
 ## Requirements
 - **Cấp phát IP:** mỗi cụm một /24 từ `10.77.0.0/16` (cấu hình được); địa chỉ trong mesh chỉ dùng IPv4.
-- **WireGuard:** agent sinh khoá WG; **private key + danh sách peer gần nhất lưu tại `/var/lib/bennghe-agent/wg/` (0600)**. Agent cấu hình `bn-wg0` bằng `wgctrl` + netlink, MTU theo cụm (mặc định 1420). Người dùng có thể ghi đè endpoint. <!-- Red Team: D -->
+- **WireGuard:** agent sinh khoá WG; **private key + danh sách peer gần nhất lưu tại `/var/lib/bennghe-agent/wg/` (0600)**. Agent cấu hình `bn-wg0` bằng crate `wireguard-control` (backend kernel/netlink) và `rtnetlink` cho địa chỉ/route, MTU theo cụm (mặc định 1420). Người dùng có thể ghi đè endpoint. <!-- Red Team: D -->
 - **Thứ tự khởi động:** unit oneshot `bn-wg-up.service` dựng lại `bn-wg0` từ file cục bộ, không cần control plane; drop-in `docker.service.d/10-bn-wg.conf` với `After=` và `Requires=bn-wg-up.service`, để dockerd không bao giờ khởi động trước khi IP WG tồn tại (research-01 mục 3). <!-- Red Team: D -->
 - **MTU cho mọi overlay:** `daemon.json` trên mọi node đặt `default-network-opts.overlay.com.docker.network.driver.mtu=<MTU cụm>` để mọi overlay — kể cả network do stack tự tạo — kế thừa [UNVERIFIED: kiểm trong lab rằng Docker 29 áp tuỳ chọn này cho overlay]; các network do platform tạo vẫn đặt tường minh. Network `ingress` được tạo lại với cùng MTU ngay sau `swarm init`. **Trước khi join**, agent đo path MTU tới các peer; nếu nhỏ hơn MTU cụm thì từ chối join và chỉ cho phép qua thao tác bảo trì "hạ MTU cụm" (có ghi rõ là gây gián đoạn vì phải tạo lại network). <!-- Red Team: I -->
 - **Swarm:** node đầu tiên `swarm init` với `--advertise-addr`, `--data-path-addr`, `--listen-addr` trên IP WG. Join token do agent của leader gửi về (authz phase 2), control plane lưu mã hoá. Mặc định 3 node đầu là manager, sau đó là worker; UI cảnh báo khi số manager chẵn; promote/demote được.
@@ -31,14 +31,14 @@ Node trong một cụm (có thể khác nhà cung cấp) được nối bằng W
 - **RBAC/audit:** route promote/demote, nhãn, drain, gỡ node, ghi đè endpoint, bảo trì MTU có `x-permission` (admin cụm) và audit. <!-- Red Team: C -->
 
 ## Files to Create / Modify
-- Create: `internal/agent/wg/`, `internal/agent/swarm/`, `internal/agent/firewall/`, `internal/agent/nodeprep/` (cổng sẵn sàng), `deploy/agent/bn-wg-up.service`, `deploy/agent/docker-bn-wg.conf`, `deploy/agent/daemon.json.tmpl`
-- Create: `internal/cp/netalloc/`, `internal/cp/swarmctl/` (chọn vai trò, quy trình gỡ, kiểm tra trước khi gỡ)
+- Create: `crates/agent/src/wg/`, `crates/agent/src/swarm/`, `crates/agent/src/firewall/`, `crates/agent/src/nodeprep/` (cổng sẵn sàng), `deploy/agent/bn-wg-up.service`, `deploy/agent/docker-bn-wg.conf`, `deploy/agent/daemon.json.tmpl`
+- Create: `crates/cp/src/netalloc/`, `crates/cp/src/swarmctl/` (chọn vai trò, quy trình gỡ, kiểm tra trước khi gỡ)
 - Create: `migrations/<timestamp>_cluster_network.sql`
-- Modify: `proto/agent/v1/agent.proto`, `api/openapi.yaml`, `internal/cp/rbac/policy.go`, `web/src/routes/clusters/*`
+- Modify: `proto/agent/v1/agent.proto`, `api/openapi.yaml`, `crates/cp/src/rbac/policy.rs`, `web/src/routes/clusters/*`
 
 ## Tasks & Steps
 1. Cấp phát IP, lưu khoá WG + peer cục bộ, `bn-wg-up.service`, drop-in docker.
-2. Cấu hình WG idempotent bằng wgctrl.
+2. Cấu hình WG idempotent bằng `wireguard-control`.
 3. `daemon.json` (MTU mặc định overlay, iptables), đo path MTU trước join.
 4. Swarm init/join; tạo lại `ingress`; `bn-system`.
 5. Firewall iptables + DOCKER-USER, fail closed với nftables.

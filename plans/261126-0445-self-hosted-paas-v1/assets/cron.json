@@ -2,7 +2,7 @@
 "lanes":[{"id":"cpl","label":"Control plane","role":"orchestrator"},{"id":"ag","label":"Agent manager","role":"worker"},{"id":"sw","label":"Swarm","role":"system"}],
 "steps":[
 {"id":"s1","label":"Lịch trong desired state đã ký","kind":"start","lane":"cpl"},
-{"id":"s2","label":"Lưu bbolt trên mọi manager","kind":"action","lane":"ag"},
+{"id":"s2","label":"Lưu redb trên mọi manager","kind":"action","lane":"ag"},
 {"id":"s3","label":"Leader, hoặc nhịp tim leader cũ?","kind":"decision","lane":"ag"},
 {"id":"s4","label":"replicated-job tên theo giờ lịch","kind":"action","lane":"sw"},
 {"id":"s5","label":"Kết quả vào outbox (idempotent)","kind":"action","lane":"ag"},

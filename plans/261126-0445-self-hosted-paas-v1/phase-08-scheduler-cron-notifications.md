@@ -13,15 +13,15 @@ dependencies: [7]
 Cron job và lịch backup chạy đúng giờ khi control plane offline, chịu được đổi leader và agent leader chết, không chạy trùng; có lịch sử, log và thông báo qua Telegram, Slack, email, webhook. Đây là mốc **alpha3**.
 
 ## Requirements
-- **Lưu lịch qua desired state, không dùng Swarm config:** control plane gửi danh sách lịch của cụm (đã ký, theo phase 2) tới agent của **mọi manager**; mỗi agent lưu trong bbolt. Lịch chỉ chứa tham chiếu tên secret, không chứa credential. <!-- Red Team: G, B -->
+- **Lưu lịch qua desired state, không dùng Swarm config:** control plane gửi danh sách lịch của cụm (đã ký, theo phase 2) tới agent của **mọi manager**; mỗi agent lưu trong `redb`. Lịch chỉ chứa tham chiếu tên secret, không chứa credential. <!-- Red Team: G, B -->
 - **Ai chạy scheduler:** <!-- Red Team: G -->
-  - Agent trên node đang là Swarm leader chạy scheduler (`robfig/cron/v3`, có timezone) và ghi nhịp tim vào nhãn node `bn.sched.heartbeat` mỗi 15 giây.
+  - Agent trên node đang là Swarm leader chạy scheduler (crate `cron` + `chrono-tz` cho timezone; `cron` đọc biểu thức 6–7 trường nên bộ đọc thêm trường giây `0` cho biểu thức 5 trường; bộ test dùng cùng vector với kế hoạch cũ về DST, tháng ngắn và ngày trong tuần/tháng; **đo RSS của agent sau khi thêm `chrono-tz`**, nếu làm vượt 10 MB thì chuyển sang bảng múi giờ nạp từ `/usr/share/zoneinfo`) và ghi nhịp tim vào nhãn node `bn.sched.heartbeat` mỗi 15 giây.
   - Nếu nhịp tim cũ hơn 45 giây (agent leader chết, đang tự cập nhật hoặc crash-loop) thì agent manager khoẻ có `bn.node` nhỏ nhất tiếp quản cho tới khi nhịp tim của leader trở lại.
   - Tự cập nhật agent: node leader cập nhật sau cùng (phase 2).
 - **Chống chạy trùng:** tên service = `bn-cron-<schedule-id>-<scheduled-unix>`, trong đó `scheduled-unix` là **thời điểm theo biểu thức cron**, không phải đồng hồ hiện tại. Service đã xong được giữ theo quy tắc phase 7 (`max(10 phút, 2 × chu kỳ)`), nên hai scheduler chạy chồng trong lúc chuyển giao không tạo được tên trùng. Không chạy bù lượt bị lỡ (ghi trong tài liệu). <!-- Red Team: G -->
 - **Đồng hồ:** agent kiểm lệch giờ so với control plane và các manager khác; lệch > 2 giây phát sự kiện và hiện cảnh báo; tài liệu yêu cầu NTP. <!-- Red Team: G -->
 - **Nhận lại job khi đổi leader:** scheduler mới quét service `bn-cron-*`/`bn-backup-*` theo label (deadline, schedule) và tiếp quản timeout, thu kết quả, dọn dẹp. Mọi agent manager đều báo được kết quả (event id = tên service). <!-- Red Team: G -->
-- **Thực thi** (`internal/agent/jobs` + `servicespec`): `replicated-job` với image hiện tại của app (cùng network; env của app chỉ được kế thừa khi người dùng bật, và lấy đúng giá trị đã giải trong snapshot deployment đang chạy, nên `${{project.KEY}}` đi qua cùng `internal/cp/envref` <!-- Red Team (Dokploy): 14 -->) hoặc image tuỳ ý (không kế thừa env, đi qua chính sách kiểm duyệt); lệnh; timeout; chính sách song song `forbid | allow`; `MaxAttempts` tường minh. <!-- Red Team: M, E -->
+- **Thực thi** (`crates/agent/src/jobs` + `servicespec`): `replicated-job` với image hiện tại của app (cùng network; env của app chỉ được kế thừa khi người dùng bật, và lấy đúng giá trị đã giải trong snapshot deployment đang chạy, nên `${{project.KEY}}` đi qua cùng `crates/cp/src/envref` <!-- Red Team (Dokploy): 14 -->) hoặc image tuỳ ý (không kế thừa env, đi qua chính sách kiểm duyệt); lệnh; timeout; chính sách song song `forbid | allow`; `MaxAttempts` tường minh. <!-- Red Team: M, E -->
 - **Kết quả:** exit code, thời gian, log (cắt 1 MB) vào outbox (lớp ưu tiên của phase 2), đồng bộ lên control plane.
 - Lịch backup phase 7 dùng cùng cơ chế (loại job `backup`), tôn trọng khoá theo repo; mục lịch backup volume mang cờ `stop_service` và thời gian tạm dừng tối đa, và scheduler thực hiện quy trình lease của phase 7. <!-- Red Team (Dokploy): 10 -->
 - **Thông báo** — chỉ thêm phần tiêu thụ cho contract `events.Emit` từ phase 1: kênh `telegram | slack | email (SMTP) | webhook (URL + HMAC)` cấu hình mã hoá, URL webhook đi qua `netpolicy`. Quy tắc theo sự kiện đã được các phase trước phát: deploy, cron, backup, node offline > 2 phút, disk > 90%, gia hạn cert thất bại, cert tải lên sắp hết hạn, dọn Docker lỗi, preview (phase 11), lệch giờ, đổi session agent bất thường, CPU/RAM vượt ngưỡng (bên dưới). Khi control plane offline, thông báo về các lượt chạy đi muộn sau khi đồng bộ (tài liệu). <!-- Red Team: C -->
@@ -30,9 +30,9 @@ Cron job và lịch backup chạy đúng giờ khi control plane offline, chịu
 - **UI:** cron theo app (xem trước 5 lần chạy kế), lịch sử + log; kênh và quy tắc thông báo, nút gửi thử.
 
 ## Files to Create / Modify
-- Create: `internal/agent/scheduler/` (leader + tiếp quản theo nhịp tim, nhận lại job, kiểm lệch giờ), `internal/cp/cron/`, `internal/cp/notify/` (một file mỗi kênh, tiêu thụ River job từ `events`)
+- Create: `crates/agent/src/scheduler/` (leader + tiếp quản theo nhịp tim, nhận lại job, kiểm lệch giờ), `crates/cp/src/cron/`, `crates/cp/src/notify/` (một file mỗi kênh, tiêu thụ job từ `events`)
 - Create: `migrations/<timestamp>_cron_notifications.sql`
-- Modify: `internal/cp/desired/` (lịch trong desired state cho manager), `internal/cp/backups/`, `internal/cp/servicespec/`, `proto/agent/v1/agent.proto`, `api/openapi.yaml`, `internal/cp/rbac/policy.go`, `web/src/routes/apps/*/cron*`, `web/src/routes/settings/notifications*` <!-- Red Team: N -->
+- Modify: `crates/cp/src/desired/` (lịch trong desired state cho manager), `crates/cp/src/backups/`, `crates/cp/src/servicespec/`, `proto/agent/v1/agent.proto`, `api/openapi.yaml`, `crates/cp/src/rbac/policy.rs`, `web/src/routes/apps/*/cron*`, `web/src/routes/settings/notifications*` <!-- Red Team: N -->
 
 ## Tasks & Steps
 1. Lịch trong desired state tới mọi manager.

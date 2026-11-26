@@ -1,9 +1,9 @@
 ---
 title: "Self-hosted PaaS v1"
-description: "PaaS mã nguồn mở (AGPL-3.0) tự cài: một control plane Go + React quản lý nhiều cụm Docker Swarm trên WireGuard, deploy app/compose, database, backup S3/R2, cron, team/RBAC và tích hợp Cloudflare."
+description: "PaaS mã nguồn mở (AGPL-3.0) tự cài: một control plane Rust + React quản lý nhiều cụm Docker Swarm trên WireGuard (agent Rust ≤ 10 MB RSS), deploy app/compose, database, backup S3/R2, cron, team/RBAC và tích hợp Cloudflare."
 status: pending
 priority: P1
-effort: "47w"
+effort: "53w"
 tags: [feature, infra, backend, frontend, api]
 blockedBy: []
 blocks: []
@@ -14,17 +14,17 @@ created: 2026-11-26
 
 ## Overview
 
-PaaS mã nguồn mở (AGPL-3.0) tự cài: một control plane Go + React quản lý nhiều cụm Docker Swarm trên WireGuard, deploy app/compose, database, backup S3/R2, cron, team/RBAC và tích hợp Cloudflare. Bản HTML đầy đủ: [plan.html](./plan.html).
+PaaS mã nguồn mở (AGPL-3.0) tự cài: một control plane Rust + React quản lý nhiều cụm Docker Swarm trên WireGuard, deploy app/compose, database, backup S3/R2, cron, team/RBAC và tích hợp Cloudflare; agent Rust rảnh ≤ 10 MB RSS trên VPS 512 MB. Bản HTML đầy đủ: [plan.html](./plan.html).
 
 Nguồn: [brainstorm](../reports/brainstorm-261126-1114-self-hosted-paas.md), phần tư vấn đã xác nhận ngày 2026-11-26, research: [hạ tầng](./research/researcher-01-infra-runtime-report.md), [tích hợp](./research/researcher-02-integrations-report.md).
 
-Effort: tổng các phase 39,1 tuần + 20% buffer tích hợp và ổn định ≈ 47 tuần cho **1 người full-time** (khoảng 11 tháng; alpha1 ~tuần 12, alpha2 ~tuần 23, alpha3 ~tuần 34). Các phase chạy tuần tự. Trước bổ sung từ so sánh Dokploy (2026-11-26) là 29,5 + buffer ≈ 36 tuần. <!-- Updated: Dokploy comparison 2026-11-26 -->
+Effort: tổng các phase 43,8 tuần + 20% buffer tích hợp và ổn định ≈ 53 tuần cho **1 người full-time** (khoảng 12 tháng; alpha1 ~tuần 14, alpha2 ~tuần 26, alpha3 ~tuần 37). Bản Go là 39,1 + buffer ≈ 47 tuần; phần tăng 4,7 tuần là **ước tính chưa kiểm chứng** của việc chọn Rust (spike và job queue/OpenAPI ở phase 1, agent ở phase 2–3, ACME DNS ở phase 4, `buildctl` ở phase 5, compose parser tự viết ở phase 9). Các phase chạy tuần tự. Trước bổ sung từ so sánh Dokploy (2026-11-26) là 29,5 + buffer ≈ 36 tuần. <!-- Updated: Dokploy comparison 2026-11-26 -->
 
 ## Key Decisions (đã chốt với người dùng)
 
 - Tên sản phẩm **Bennghe** (từ Bến Nghé — bến cảng xưa của Sài Gòn); module `github.com/<org>/bennghe`; prefix kỹ thuật `bn` (nhãn `bn.*`, interface `bn-wg0`, đường dẫn `/var/lib/bennghe-agent`). Cần kiểm tra tên còn trống trên GitHub/domain trước khi public.
 - Open source, self-hosted, single-tenant; một control plane quản lý nhiều cụm. AGPL-3.0.
-- Go cho control plane + agent; React + Vite cho UI (nhúng vào binary).
+- **Rust cho control plane + agent** (người dùng chốt 2026-11-26, thay quyết định Go trước đó); React + Vite cho UI (nhúng vào binary bằng `rust-embed`). Lý do duy nhất: agent phải ≤ 10 MB RSS khi rảnh trên VPS 512 MB. **Quyết định có điều kiện:** hiệu lực sau khi cổng spike ở phase 1 đạt; nếu agent Rust không đạt 10 MB hoặc agent Go đã ≤ 10 MB thì dừng và hỏi người dùng. Hệ quả đã chấp nhận: API chuyển từ spec-first sang code-first (`utoipa` sinh spec, `x-permission` vẫn bắt buộc), compose parser và bước DNS-01 Cloudflare tự viết, `buildctl` chạy trong container thay cho BuildKit client, AI viết code nên người dùng chịu việc review/gỡ lỗi Rust.
 - Control plane + agent; agent kết nối ra (WebSocket + TLS), xác thực hai chiều Ed25519, desired state có chữ ký.
 - Mỗi cụm là Docker Swarm trên WireGuard full mesh; node có thể khác nhà cung cấp.
 - Registry nội bộ mỗi cụm + build node.
@@ -54,6 +54,7 @@ Effort: tổng các phase 39,1 tuần + 20% buffer tích hợp và ổn định 
 ## Success Criteria (Done means)
 
 - [ ] Cài control plane bằng một lệnh; node join vào cụm dưới 2 phút.
+- [ ] Agent rảnh ≤ 10 MB RSS trên VPS 512 MB (x86_64 và aarch64), đo bằng `ps -o rss` sau 5 phút; báo cáo spike ở phase 1 là cổng chặn.
 - [ ] Cụm 3 node trên 2 nhà cung cấp chạy app `replicas=3`; tắt 1 node thì Swarm dời replica.
 - [ ] Push lên GitHub/GitLab/Gitea thì app tự build, deploy với 0 request lỗi, commit status cập nhật.
 - [ ] Deploy lỗi giữ nguyên bản cũ; rollback tay một thao tác trả lại cả image lẫn cấu hình.
@@ -73,7 +74,7 @@ SaaS đa khách hàng, billing, Kubernetes, autoscaling, DNS provider ngoài Clo
 
 ## Constraints
 
-Go + React/Vite; AGPL-3.0; control plane và Traefik không mount Docker socket; agent chỉ cần kết nối ra; node trong cụm cần UDP 51820 reachable; secret mã hoá at-rest và không bao giờ nằm trong Swarm config/env thường; protocol agent có version (N, N-1 đầy đủ; cũ hơn chỉ nhận cập nhật); MTU overlay đặt tường minh; database và volume của stack ghim node, stop-first; Docker dùng backend iptables.
+Rust + React/Vite; AGPL-3.0; control plane và Traefik không mount Docker socket; agent chỉ cần kết nối ra; node trong cụm cần UDP 51820 reachable; secret mã hoá at-rest và không bao giờ nằm trong Swarm config/env thường; protocol agent có version (N, N-1 đầy đủ; cũ hơn chỉ nhận cập nhật); MTU overlay đặt tường minh; database và volume của stack ghim node, stop-first; Docker dùng backend iptables.
 
 ## Load-bearing Assumptions
 
@@ -82,11 +83,16 @@ Go + React/Vite; AGPL-3.0; control plane và Traefik không mount Docker socket;
 | Swarm còn được duy trì trong vòng đời v1 (đã xác nhận: Mirantis hỗ trợ tới khoảng 2030, Engine 29.10.1 ra 2026-11-24) | Thông báo ngừng hỗ trợ sau thương vụ IREN mua Mirantis | Dừng và lập lại plan cho lớp runtime |
 | Rolling update 0 request lỗi (Swarm chờ HEALTHCHECK đã xác nhận; Traefik route tới VIP của service) | Test k6 phase 5 có request lỗi | Thêm retry middleware cho request idempotent; nếu vẫn lỗi thì hỏi người dùng hạ mục tiêu |
 | MTU wg0 1420 phù hợp mọi nhà cung cấp; `default-network-opts` áp cho mọi overlay | Test tải 50 MB phase 3/9 treo | Đo path MTU trước khi join; transform đặt MTU tường minh |
+| Agent Rust rảnh ≤ 10 MB RSS trên VM 512 MB (spike phase 1; chưa đo) | Spike đo trên 10 MB, hoặc agent Go cùng điều kiện đã ≤ 10 MB | Dừng, báo người dùng; không tự đổi ngôn ngữ |
+| `bollard` đủ cho Swarm (`ReplicatedJob`, `update_service`) với Docker API ≥ 1.44 (các hàm có trên docs.rs; hành vi chưa thử) | Spike phase 1 hoặc lab phase 3/5 đỏ | Gọi Docker CLI cho thao tác thiếu, hoặc vá `bollard` |
+| Enqueue job trong cùng transaction với thao tác (chưa kiểm với `graphile_worker`) | Spike phase 1 đỏ | Tự viết bảng `jobs` với `SKIP LOCKED` (thêm ~1 tuần) |
+| `utoipa` xuất được `x-permission` (tài liệu `extensions(...)` có; chưa thử) | Spike phase 1 đỏ | Hậu xử lý spec từ bảng route trong `rbac` |
+| Tập con compose hỗ trợ đủ cho 10 template v1 và khớp `docker compose config` | So sánh vi sai ở phase 9 đỏ | Thu hẹp tập con và từ chối rõ ràng; không nhận compose chưa kiểm |
 | Gắn Traefik vào network của từng project chấp nhận được (restart Traefik khi có project mới; thêm một lần khi project bật preview — phase 11) | Gián đoạn đo được ở phase 4 | Chuyển sang network ingress chung có kiểm soát; hỏi người dùng |
 
 ## Dependencies
 
-Docker Engine (Swarm mode, API ≥ 1.44, backend iptables), WireGuard, Traefik v3 (file provider), distribution registry, BuildKit, Railpack, lego v5, River, restic, compose-go, minisign, Cloudflare API, GitHub/GitLab/Gitea API.
+Docker Engine (Swarm mode, API ≥ 1.44, backend iptables), WireGuard, Traefik v3 (file provider), distribution registry, BuildKit (`buildctl`), Railpack, restic, minisign; thư viện Rust: `axum`, `utoipa`, `sqlx`, `graphile_worker` (hoặc bảng job tự viết), `bollard`, `tokio-tungstenite`, `rustls`, `prost`, `instant-acme`, `wireguard-control`, `redb`, `minisign-verify`, `cron`, `psl`; compose parser tự viết; Cloudflare API, GitHub/GitLab/Gitea API.
 
 ## Red Team Review
 
@@ -259,8 +265,52 @@ Docker Engine (Swarm mode, API ≥ 1.44, backend iptables), WireGuard, Traefik v
 - Reconciled stale references: 2 (tiêu chí "bị từ chối" của zone ở phase 11; danh sách `[UNVERIFIED]` ở Open Questions).
 - Unresolved contradictions: 0.
 
+## Rust Revision — 2026-11-26
+
+**Trigger:** người dùng chọn Rust thay Go sau buổi tư vấn (`/ak-advise`); lý do: agent ≤ 10 MB RSS trên VPS 512 MB. Người dùng chọn phạm vi **toàn bộ Rust**, thành thạo hai ngôn ngữ như nhau, AI viết code. Đây là bản cập nhật plan, **chưa chạy red-team hay validate lại**.
+
+### Bản đồ thay thế thư viện
+
+| Go (bản cũ) | Rust (bản mới) | Mức chắc chắn |
+|---|---|---|
+| `moby/moby/client` | `bollard` 0.21 | Có hàm Swarm trên docs.rs; hành vi `ReplicatedJob` chưa thử |
+| chi + oapi-codegen (spec-first) | `axum` + `utoipa` (code-first, spec sinh ra và commit) | `extensions(...)` có trong tài liệu; chưa thử xuất `x-permission` |
+| pgx + sqlc + goose | `sqlx` (dữ liệu offline `.sqlx/`) + `sqlx migrate` | Phổ biến; không rủi ro lớn |
+| River | `graphile_worker` (có `SKIP LOCKED`, cron, `job_key`), dự phòng: bảng `jobs` tự viết | Enqueue trong cùng transaction chưa kiểm |
+| `coder/websocket` | `tokio-tungstenite` + `rustls` (agent), WebSocket của `axum` (control plane) | Giữ thiết kế WebSocket + protobuf; **không dùng gRPC/`tonic`** vì gRPC không đi qua Cloudflare Tunnel |
+| buf + protobuf Go | `prost` + `protox` (không cần `protoc`); buf chỉ để lint/breaking | Phổ biến |
+| lego v5 | `instant-acme` 0.8 (có `RenewalInfo`) + bước DNS-01 Cloudflare tự viết | ACME chắc; DNS provider tự viết |
+| compose-go v2 | Bộ đọc tự viết cho tập con compose + so sánh vi sai với `docker compose config` | **Rủi ro lớn nhất**, +2 tuần |
+| BuildKit Go client | `buildctl --progress rawjson` chạy trong container buildkit qua `bollard` | `rawjson` đã xác nhận trong source; huỷ giữa chừng chưa thử |
+| wgctrl + netlink | `wireguard-control` 2.0 + `rtnetlink` | Chưa thử trên VM |
+| bbolt | `redb` 5.0 | Chưa đo RSS |
+| gopsutil | đọc `/proc` trực tiếp | Đơn giản |
+| `aead.dev/minisign` | `minisign-verify` 0.3 | Chỉ xác minh, đủ cho agent |
+| robfig/cron | `cron` + `chrono-tz` | Cần đo RSS và test DST |
+| `x/net/publicsuffix` | `psl` | Bảo trì tốt |
+| goreleaser, golangci-lint | workflow release + `cargo-zigbuild`; `clippy`, `rustfmt`, `cargo-deny`, `cargo-nextest` | Phổ biến |
+
+### Đã kiểm trong phiên cập nhật (2026-11-26)
+- Tồn tại và còn được cập nhật trên crates.io: `bollard`, `instant-acme`, `sqlx`, `apalis`, `graphile_worker`, `redb`, `wireguard-control`, `rtnetlink`, `tokio-tungstenite`, `prost`, `protox`, `psl`, `minisign-verify`, `cron`, `utoipa`, `axum`, `rustls`, `argon2`, `cargo-deny`, `cargo-nextest`.
+- `bollard` có `create_service`, `update_service`, `init_swarm`, `join_swarm`, `list_tasks`, `create_secret`, `create_config` (docs.rs).
+- `instant-acme` có `RenewalInfo`/`renewal_info`; `utoipa` có thuộc tính `extensions(...)`; `buildctl` có `--progress rawjson` (source BuildKit).
+- `docker-compose-types` 0.24 chỉ là kiểu dữ liệu; `compose-spec` ngừng cập nhật từ 2024-10; `buildkit-client` 0.1.4 có khoảng 470 lượt tải, không đủ tin cậy.
+
+### Chưa kiểm (cổng chặn ở phase 1 hoặc phase sở hữu)
+- RSS rảnh của agent Rust ≤ 10 MB và của agent Go cùng điều kiện (**quyết định cả đổi hướng này dựa vào đây**).
+- Hành vi `bollard` với Docker 29 và API ≥ 1.44 (`ReplicatedJob`, rolling update).
+- Enqueue job trong cùng transaction với `graphile_worker`.
+- `utoipa` xuất `x-permission` đúng chỗ.
+- `wireguard-control` trên VM Incus.
+- Huỷ build giữa chừng qua `buildctl` exec; đo RSS agent sau khi thêm `chrono-tz` và `redb`.
+- Con số tăng effort 4,7 tuần.
+
 ## Open Questions
 
-Không còn câu hỏi chặn. Các điểm `[UNVERIFIED]` được kiểm trong phase sở hữu: ba điểm của plan gốc (phase 3, 6) và hai điểm của phần bổ sung (quyền tối thiểu của GitHub App cho endpoint collaborator permission; Traefik thấy IP overlay của task preview khi đi qua VIP của Swarm — phase 11).
+- **Ngưỡng RSS đỉnh của agent** khi đang rollout, stream log hoặc build: hiện chỉ có ngưỡng khi rảnh (≤ 10 MB). Cần người dùng chốt (ví dụ ≤ 25 MB) trước khi phase 2 đóng.
+- **Lựa chọn crate YAML cho compose** (`serde_norway` hay `saphyr`) chốt lúc bắt đầu phase 9.
+- Bản cập nhật Rust chưa qua red-team/validate; nên chạy `/ak-plan red-team` và `/ak-plan validate` sau cổng spike.
+
+Không còn câu hỏi chặn khác. Các điểm `[UNVERIFIED]` được kiểm trong phase sở hữu: ba điểm của plan gốc (phase 3, 6) và hai điểm của phần bổ sung (quyền tối thiểu của GitHub App cho endpoint collaborator permission; Traefik thấy IP overlay của task preview khi đi qua VIP của Swarm — phase 11).
 
 <!-- slug: self-hosted-paas-v1 -->

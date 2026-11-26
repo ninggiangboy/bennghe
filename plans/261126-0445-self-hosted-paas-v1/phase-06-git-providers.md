@@ -35,7 +35,7 @@ Tích hợp native GitHub (GitHub App), GitLab và Gitea/Forgejo: kết nối t�
   - Khử trùng theo `(connection, ref, after_sha)` ngoài delivery ID (delivery ID không nằm trong phần được ký nên không chống replay).
   - Trước khi deploy, hỏi API provider để xác nhận SHA vẫn là đầu branch; nếu không thì bỏ qua (chống replay payload cũ).
   - `EnsureWebhook` luôn đăng ký cả sự kiện push lẫn pull/merge request (idempotent: cập nhật hook đã có); bộ xử lý phân loại theo loại sự kiện và trả 2xx bỏ qua với mọi sự kiện không phải push cho tới khi phase 11 thêm bộ xử lý PR. <!-- Red Team (Dokploy): 5 -->
-  - Trả 2xx nhanh rồi xử lý qua River; deployment đi qua hàng đợi tuần tự của app (phase 5).
+  - Trả 2xx nhanh rồi xử lý qua job queue; deployment đi qua hàng đợi tuần tự của app (phase 5).
 - Push vào branch theo dõi thì tạo deployment; commit status `pending` khi bắt đầu, `success`/`failure` khi kết thúc, `error` với mô tả "đã huỷ" khi `cancelled` và "được thay thế" khi `superseded`, link về trang deployment. <!-- Red Team (Dokploy): 11 -->
 - **Watch paths (monorepo):** app có `watch_paths` (danh sách glob kiểu `**`, hỗ trợ mẫu loại trừ `!`); rỗng nghĩa là mọi push đều deploy. Stack nhận cùng tính năng ở phase 9. Khi có push hợp lệ: <!-- Updated: Dokploy comparison 2026-11-26 --> <!-- Red Team (Dokploy): 14, 15 -->
   - Base là `source_sha` của deployment production **`healthy` gần nhất** của app (không dùng `before` của payload, không dùng deployment lỗi hay đã rollback); lấy danh sách file bằng `ChangedFiles(base, head)`. Không dựa vào danh sách file trong payload (GitLab chỉ gửi 20 commit, GitHub cắt danh sách commit).
@@ -49,16 +49,16 @@ Tích hợp native GitHub (GitHub App), GitLab và Gitea/Forgejo: kết nối t�
 - **RBAC/audit:** kết nối provider là thao tác admin; chọn repo cho app theo quyền project; mọi route có `x-permission` + audit. <!-- Red Team: C -->
 
 ## Files to Create / Modify
-- Create: `internal/cp/gitprovider/provider.go`, `internal/cp/gitprovider/github/`, `internal/cp/gitprovider/gitlab/`, `internal/cp/gitprovider/gitea/`, `internal/cp/webhooks/`
+- Create: `crates/cp/src/gitprovider/provider.rs`, `crates/cp/src/gitprovider/github/`, `crates/cp/src/gitprovider/gitlab/`, `crates/cp/src/gitprovider/gitea/`, `crates/cp/src/webhooks/`
 - Create: `migrations/<timestamp>_git_connections.sql` (kèm cột `apps.watch_paths`)
-- Modify: `internal/cp/deploy/` (trigger từ push, gọi SetCommitStatus), `api/openapi.yaml`, `internal/cp/rbac/policy.go`, `web/src/routes/settings/git*`, wizard tạo app
+- Modify: `crates/cp/src/deploy/` (trigger từ push, gọi SetCommitStatus), `api/openapi.yaml`, `crates/cp/src/rbac/policy.rs`, `web/src/routes/settings/git*`, wizard tạo app
 
 ## Tasks & Steps
 1. Interface + test contract chung (một bộ test chạy cho mọi provider bằng fixture).
 2. GitHub App Manifest flow + installation + token + webhook + status.
 3. GitLab OAuth + hook + status.
 4. Gitea/Forgejo OAuth + hook + status.
-5. Webhook endpoint + khử trùng + River.
+5. Webhook endpoint + khử trùng + job queue.
 6. Nối deploy pipeline với commit status; watch paths qua `ChangedFiles` với fallback deploy.
 7. UI kết nối provider, chọn repo/branch trong wizard.
 

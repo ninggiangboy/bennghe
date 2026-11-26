@@ -3,7 +3,7 @@ phase: 4
 title: "Ingress & Certificates"
 status: pending
 priority: P1
-effort: "2.4w"
+effort: "2.8w"
 dependencies: [3]
 ---
 
@@ -18,11 +18,11 @@ Mỗi cụm có Traefik làm ingress trên các node gắn nhãn ingress, **ch�
   - Chỉ bật **file provider** watch `/etc/bennghe/traefik/dynamic`. Agent trên mỗi node ingress sinh router, service và TLS từ desired state (bảng `domains`): mỗi route trỏ tới `http://<tên-service-swarm>:<port>` qua DNS VIP của Swarm, nên Swarm tự rút task đang dừng khỏi VIP (thay cho label `lbswarm`, và không còn độ trễ poll của provider swarm).
   - Không mount `docker.sock` vào Traefik; node ingress có thể là worker.
   - File YAML chứa PEM cert + key inline, ghi file tạm rồi `rename` nguyên tử trong thư mục watch (Traefik không nạp lại file cert nằm ngoài thư mục này — research-01 mục 5).
-- **Cert manager** mở rộng `internal/cp/certs` từ phase 1, dùng `github.com/go-acme/lego/v5` (`Present(ctx, ...)`):
+- **Cert manager** mở rộng `crates/cp/src/certs` từ phase 1, dùng `instant-acme` (đã có `RenewalInfo` cho ARI). Khác bản lego: **không có sẵn provider DNS**, nên `crates/cp/src/cloudflare/` tự viết bước DNS-01 (tạo/xoá TXT `_acme-challenge` bằng `reqwest`, chờ lan truyền) và dọn record kể cả khi thất bại giữa chừng; phần này là việc thêm so với kế hoạch Go:
   - Một ACME account mỗi bản cài, khoá lưu mã hoá; bật ARI để gia hạn không tính vào rate limit (50 cert/tên miền đăng ký/tuần, 5 cert trùng/tuần).
   - HTTP-01: token lưu trong Postgres; control plane phục vụ `/.well-known/acme-challenge/{token}`; route ưu tiên cao nhất trong file config của Traefik trỏ path này về URL public của control plane. Route này do platform sinh, người dùng không ghi đè được.
   - DNS-01 qua Cloudflare khi zone đã liên kết; wildcard chỉ qua DNS-01.
-  - Gia hạn: River periodic job hằng ngày với `RunOnStart`, khi còn dưới 30 ngày hoặc khi ARI khuyến nghị; lỗi gia hạn gọi `events.Emit(cert.renewal_failed)` (contract từ phase 1, nên cảnh báo hoạt động ngay khi phase 8 thêm kênh). UI hiện cảnh báo từ 21 ngày. <!-- Red Team: C -->
+  - Gia hạn: job định kỳ hằng ngày (chạy ngay khi khởi động), khi còn dưới 30 ngày hoặc khi ARI khuyến nghị; lỗi gia hạn gọi `events.Emit(cert.renewal_failed)` (contract từ phase 1, nên cảnh báo hoạt động ngay khi phase 8 thêm kênh). UI hiện cảnh báo từ 21 ngày. <!-- Red Team: C -->
   - Dev/CI dùng Pebble; kiểm thật dùng Let's Encrypt staging.
 - **Quyền sở hữu domain:** <!-- Red Team: F -->
   - `domains(id, project_id, owner_type: app|stack_service, owner_id, hostname UNIQUE, tls_mode: http01|dns01|wildcard|custom (phase 11 thêm `preview_zone`), cf_zone_id?, proxied, exposure: direct|tunnel)`; `hostname` là duy nhất trong cả bản cài.
@@ -34,14 +34,14 @@ Mỗi cụm có Traefik làm ingress trên các node gắn nhãn ingress, **ch�
 - Control plane phải truy cập được từ internet để HTTP-01 hoạt động; tài liệu hoá.
 
 ## Files to Create / Modify
-- Create: `internal/cp/certs/` (mở rộng: DNS-01, ARI, gia hạn, phân phối), `internal/cp/cloudflare/` (DNS; tunnel ở phase 10), `internal/cp/domains/` (sở hữu, allowlist zone), `internal/cp/routing/` (mô hình route → desired state cho node ingress)
-- Create: `internal/agent/ingress/` (sinh file dynamic config Traefik, ghi nguyên tử, xoá khi bỏ nhãn ingress)
+- Create: `crates/cp/src/certs/` (mở rộng: DNS-01, ARI, gia hạn, phân phối), `crates/cp/src/cloudflare/` (DNS; tunnel ở phase 10), `crates/cp/src/domains/` (sở hữu, allowlist zone), `crates/cp/src/routing/` (mô hình route → desired state cho node ingress)
+- Create: `crates/agent/src/ingress/` (sinh file dynamic config Traefik, ghi nguyên tử, xoá khi bỏ nhãn ingress)
 - Create: `migrations/<timestamp>_domains_certs_cloudflare.sql`
-- Modify: `internal/cp/servicespec/` được tạo ở phase 5 sẽ dùng `routing`; phase này tạo spec Traefik trong `internal/cp/servicespec/infra.go` (tạo thư mục `servicespec` sớm). <!-- Red Team: N -->
-- Modify: `proto/agent/v1/agent.proto`, `api/openapi.yaml`, `internal/cp/rbac/policy.go`, `web/src/routes/settings/cloudflare*`, `web/src/routes/clusters/*`
+- Modify: `crates/cp/src/servicespec/` được tạo ở phase 5 sẽ dùng `routing`; phase này tạo spec Traefik trong `crates/cp/src/servicespec/infra.rs` (tạo thư mục `servicespec` sớm). <!-- Red Team: N -->
+- Modify: `proto/agent/v1/agent.proto`, `api/openapi.yaml`, `crates/cp/src/rbac/policy.rs`, `web/src/routes/settings/cloudflare*`, `web/src/routes/clusters/*`
 
 ## Tasks & Steps
-1. Spec Traefik (file provider only) trong `servicespec/infra.go`.
+1. Spec Traefik (file provider only) trong `servicespec/infra.rs`.
 2. Agent sinh file dynamic config; route challenge; redirect HTTP→HTTPS.
 3. Mở rộng cert manager: DNS-01, ARI, gia hạn, sự kiện; cert tải lên (`custom`) có kiểm tra và cảnh báo hết hạn.
 4. Mô hình domain + allowlist zone theo project + chặn domain control plane.
