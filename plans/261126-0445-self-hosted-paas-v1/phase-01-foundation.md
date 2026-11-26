@@ -42,7 +42,8 @@ Có monorepo chạy được: control plane Go phục vụ SPA React qua TLS c�
 - `api/openapi.yaml`, `web/`
 - `deploy/controlplane/docker-compose.yml`, `deploy/install-controlplane.sh`
 - `test/lab/incus-up.sh`, `test/lab/incus-down.sh`
-- `.github/workflows/ci.yml`, `LICENSE`, `README.md`, `docs/development.md`
+- `.github/workflows/ci.yml`, `LICENSE`, `docs/development.md`
+- Modify: `README.md` (add build and run instructions), `docs/system-architecture.md` (link boundaries to real packages)
 
 ## Tasks & Steps
 1. Module, Makefile (`make gen|test|lint|web|build`), golangci-lint, CI.
