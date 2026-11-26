@@ -7,11 +7,11 @@
 
 ## Boundaries
 
-- **Control plane** is a Go service with an embedded React UI and PostgreSQL. It
+- **Control plane** is a Rust service with an embedded React UI and PostgreSQL. It
   is the only component users talk to. It owns all durable state, encrypts
   secrets, issues TLS certificates, and signs the desired state it sends to
   agents. It never mounts a Docker socket.
-- **Agent** is a Go binary on every node. It dials the control plane, verifies
+- **Agent** is a static Rust binary on every node (target: at most 10 MB RSS when idle on a 512 MB VPS). It dials the control plane, verifies
   that instructions are signed by the control plane key it pinned at enrolment,
   and applies them. Node-level state (WireGuard, firewall, files on the node) is
   applied by each node's own agent. Cluster-level state (Swarm services,
@@ -28,6 +28,7 @@
 
 | Decision | Rejected alternatives | Why |
 |---|---|---|
+| Rust for both control plane and agent (conditional on the memory spike in phase 1 passing) | Go for both; Go control plane with a Rust agent | The agent must stay under 10 MB RSS on a 512 MB VPS, which a Go agent with the full Docker SDK is unlikely to meet (not yet measured). Costs: the OpenAPI spec is generated from code instead of written first, the compose parser and the Cloudflare DNS-01 step are written by us (no Rust equivalents of compose-go or lego's DNS providers), builds call `buildctl` in a container, and reviewing and debugging Rust falls on the maintainer. Revisit if the spike measures a Go agent at 10 MB or less, or a Rust agent above it. |
 | Agents connect out to the control plane | Control plane SSHes into servers (Coolify, Kamal) | No SSH keys to steal from the control plane, and servers behind NAT can be managed. Cost: the agent and its self-update must be maintained. |
 | Docker Swarm per cluster | Plain Docker with one service per node; a custom multi-node scheduler; Kubernetes | Swarm gives replicas, rescheduling and rolling updates without building a scheduler. Cost: a smaller ecosystem, and databases are not highly available. Revisit if Swarm support ends. |
 | WireGuard mesh under Swarm, always | Rely on a provider's private network | Clusters can span providers, and Swarm's ports are never exposed to the internet. Cost: a fixed MTU budget (overlay networks must carry an explicit MTU) and nodes need a reachable UDP port. |

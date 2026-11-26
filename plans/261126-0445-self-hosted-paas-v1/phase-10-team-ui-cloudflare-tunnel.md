@@ -15,7 +15,7 @@ Quản lý team (mời, phân vai trò theo cụm/project, gỡ người), xem a
 ## Requirements
 - **Team:** mời bằng link token (gửi email nếu đã cấu hình SMTP ở phase 8), chấp nhận lời mời thì tạo tài khoản; đổi vai trò; gỡ thành viên (huỷ session và thu hồi API token của họ ngay — phase 1) <!-- Updated: Dokploy comparison 2026-11-26 -->. Không cho gỡ owner cuối cùng.
 - **Audit UI:** danh sách có lọc theo người, hành động, kết quả (thành công/bị từ chối), đối tượng, thời gian. (Bỏ xuất CSV — Red Team O.)
-- **Kiểm RBAC toàn bộ:** cổng `TestAllRoutes` đã chạy từ phase 1; phase này bổ sung chiều nội dung spec (developer không tạo được workload vi phạm chính sách kiểm duyệt qua bất kỳ route nào: app, cron, stack, template). <!-- Red Team: C, E -->
+- **Kiểm RBAC toàn bộ:** cổng `all_routes` đã chạy từ phase 1; phase này bổ sung chiều nội dung spec (developer không tạo được workload vi phạm chính sách kiểm duyệt qua bất kỳ route nào: app, cron, stack, template). <!-- Red Team: C, E -->
 - **Cloudflare Tunnel** (mỗi cụm tuỳ chọn bật):
   - Control plane tạo tunnel loại remotely-managed qua API, lưu token mã hoá. Cấu hình ingress đặt bằng `PUT /accounts/{id}/cfd_tunnel/{id}/configurations`; lệnh PUT thay toàn bộ danh sách và phải kết thúc bằng rule catch-all (`http_status:404`), nên control plane luôn dựng lại cả danh sách từ bảng domains thay vì sửa từng phần.
   - Deploy `cloudflared` thành Swarm service 2 replica, gắn overlay network chung với Traefik, token qua Swarm secret.
@@ -24,9 +24,9 @@ Quản lý team (mời, phân vai trò theo cụm/project, gỡ người), xem a
 - Preset R2 đã có ở phase 7; phase này chỉ kiểm lại luồng Cloudflare đầy đủ.
 
 ## Files to Create / Modify
-- Create: `internal/cp/team/`, `internal/cp/cloudflare/tunnel.go`, `internal/cp/tunnel/`
+- Create: `crates/cp/src/team/`, `crates/cp/src/cloudflare/tunnel.rs`, `crates/cp/src/tunnel/`
 - Create: `migrations/00010_invites_tunnels.sql`
-- Modify: `internal/cp/rbac/`, `internal/cp/servicespec/` (spec cloudflared), `internal/cp/routing/` (route chế độ tunnel), `internal/agent/ingress/`, `api/openapi.yaml`, `web/src/routes/settings/team*`, `web/src/routes/audit*`, `web/src/routes/clusters/*` (bật tunnel)
+- Modify: `crates/cp/src/rbac/`, `crates/cp/src/servicespec/` (spec cloudflared), `crates/cp/src/routing/` (route chế độ tunnel), `crates/agent/src/ingress/`, `api/openapi.yaml`, `web/src/routes/settings/team*`, `web/src/routes/audit*`, `web/src/routes/clusters/*` (bật tunnel)
 
 ## Tasks & Steps
 1. Lời mời + chấp nhận + đổi vai trò + gỡ người.
@@ -48,7 +48,7 @@ Quản lý team (mời, phân vai trò theo cụm/project, gỡ người), xem a
 - Cụm đóng hết 80/443 bằng firewall nhà cung cấp: app có `exposure=tunnel` truy cập HTTPS được qua domain.
 
 ## Verification
-- `go test ./internal/cp/rbac/... -run TestAllRoutes`
+- `cargo test -p bn-cp rbac::all_routes`
 - Kiểm thật tunnel với zone Cloudflare thử.
 
 ## Risks
