@@ -13,7 +13,7 @@ dependencies: [4, 8]
 Quản lý team (mời, phân vai trò theo cụm/project, gỡ người), xem audit log; và expose app qua Cloudflare Tunnel cho cụm không mở 80/443.
 
 ## Requirements
-- **Team:** mời bằng link token (gửi email nếu đã cấu hình SMTP ở phase 8), chấp nhận lời mời thì tạo tài khoản; đổi vai trò; gỡ thành viên (huỷ session của họ ngay). Không cho gỡ owner cuối cùng.
+- **Team:** mời bằng link token (gửi email nếu đã cấu hình SMTP ở phase 8), chấp nhận lời mời thì tạo tài khoản; đổi vai trò; gỡ thành viên (huỷ session và thu hồi API token của họ ngay — phase 1) <!-- Updated: Dokploy comparison 2026-11-26 -->. Không cho gỡ owner cuối cùng.
 - **Audit UI:** danh sách có lọc theo người, hành động, kết quả (thành công/bị từ chối), đối tượng, thời gian. (Bỏ xuất CSV — Red Team O.)
 - **Kiểm RBAC toàn bộ:** cổng `TestAllRoutes` đã chạy từ phase 1; phase này bổ sung chiều nội dung spec (developer không tạo được workload vi phạm chính sách kiểm duyệt qua bất kỳ route nào: app, cron, stack, template). <!-- Red Team: C, E -->
 - **Cloudflare Tunnel** (mỗi cụm tuỳ chọn bật):

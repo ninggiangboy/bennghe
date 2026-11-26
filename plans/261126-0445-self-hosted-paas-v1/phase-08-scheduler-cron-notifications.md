@@ -3,7 +3,7 @@ phase: 8
 title: "Scheduler, Cron & Notifications"
 status: pending
 priority: P1
-effort: "2w"
+effort: "2.3w"
 dependencies: [7]
 ---
 
@@ -21,11 +21,12 @@ Cron job và lịch backup chạy đúng giờ khi control plane offline, chịu
 - **Chống chạy trùng:** tên service = `bn-cron-<schedule-id>-<scheduled-unix>`, trong đó `scheduled-unix` là **thời điểm theo biểu thức cron**, không phải đồng hồ hiện tại. Service đã xong được giữ theo quy tắc phase 7 (`max(10 phút, 2 × chu kỳ)`), nên hai scheduler chạy chồng trong lúc chuyển giao không tạo được tên trùng. Không chạy bù lượt bị lỡ (ghi trong tài liệu). <!-- Red Team: G -->
 - **Đồng hồ:** agent kiểm lệch giờ so với control plane và các manager khác; lệch > 2 giây phát sự kiện và hiện cảnh báo; tài liệu yêu cầu NTP. <!-- Red Team: G -->
 - **Nhận lại job khi đổi leader:** scheduler mới quét service `bn-cron-*`/`bn-backup-*` theo label (deadline, schedule) và tiếp quản timeout, thu kết quả, dọn dẹp. Mọi agent manager đều báo được kết quả (event id = tên service). <!-- Red Team: G -->
-- **Thực thi** (`internal/agent/jobs` + `servicespec`): `replicated-job` với image hiện tại của app (cùng network; env của app chỉ được kế thừa khi người dùng bật) hoặc image tuỳ ý (không kế thừa env, đi qua chính sách kiểm duyệt); lệnh; timeout; chính sách song song `forbid | allow`; `MaxAttempts` tường minh. <!-- Red Team: M, E -->
+- **Thực thi** (`internal/agent/jobs` + `servicespec`): `replicated-job` với image hiện tại của app (cùng network; env của app chỉ được kế thừa khi người dùng bật, và lấy đúng giá trị đã giải trong snapshot deployment đang chạy, nên `${{project.KEY}}` đi qua cùng `internal/cp/envref` <!-- Red Team (Dokploy): 14 -->) hoặc image tuỳ ý (không kế thừa env, đi qua chính sách kiểm duyệt); lệnh; timeout; chính sách song song `forbid | allow`; `MaxAttempts` tường minh. <!-- Red Team: M, E -->
 - **Kết quả:** exit code, thời gian, log (cắt 1 MB) vào outbox (lớp ưu tiên của phase 2), đồng bộ lên control plane.
-- Lịch backup phase 7 dùng cùng cơ chế (loại job `backup`), tôn trọng khoá theo repo.
-- **Thông báo** — chỉ thêm phần tiêu thụ cho contract `events.Emit` từ phase 1: kênh `telegram | slack | email (SMTP) | webhook (URL + HMAC)` cấu hình mã hoá, URL webhook đi qua `netpolicy`. Quy tắc theo sự kiện đã được các phase trước phát: deploy, cron, backup, node offline > 2 phút, disk > 90%, gia hạn cert thất bại, lệch giờ, đổi session agent bất thường. Khi control plane offline, thông báo về các lượt chạy đi muộn sau khi đồng bộ (tài liệu). <!-- Red Team: C -->
-- **RBAC/audit:** route cron, kênh, quy tắc, gửi thử có `x-permission` + audit.
+- Lịch backup phase 7 dùng cùng cơ chế (loại job `backup`), tôn trọng khoá theo repo; mục lịch backup volume mang cờ `stop_service` và thời gian tạm dừng tối đa, và scheduler thực hiện quy trình lease của phase 7. <!-- Red Team (Dokploy): 10 -->
+- **Thông báo** — chỉ thêm phần tiêu thụ cho contract `events.Emit` từ phase 1: kênh `telegram | slack | email (SMTP) | webhook (URL + HMAC)` cấu hình mã hoá, URL webhook đi qua `netpolicy`. Quy tắc theo sự kiện đã được các phase trước phát: deploy, cron, backup, node offline > 2 phút, disk > 90%, gia hạn cert thất bại, cert tải lên sắp hết hạn, dọn Docker lỗi, preview (phase 11), lệch giờ, đổi session agent bất thường, CPU/RAM vượt ngưỡng (bên dưới). Khi control plane offline, thông báo về các lượt chạy đi muộn sau khi đồng bộ (tài liệu). <!-- Red Team: C -->
+- **Cảnh báo ngưỡng CPU/RAM theo node:** đánh giá ở control plane trên mẫu metrics 15 giây của phase 2 (không thêm thu thập mới). Mỗi cụm có quy tắc `metric: cpu|memory`, ngưỡng % (mặc định 90) và **thời gian giữ ngưỡng** (mặc định 5 phút: mọi mẫu trong cửa sổ đều vượt ngưỡng mới báo). Cùng một node và metric không báo lại trong 30 phút (hằng số, để không spam). Trạng thái lần báo gần nhất lưu trong bảng `node_alert_state` để control plane restart không báo lại. Phát `node.cpu_high|memory_high` qua `events.Emit`; node mất kết nối không bị tính là vượt ngưỡng (đã có `node.offline`). Cảnh báo này cần control plane online (tài liệu). <!-- Updated: Dokploy comparison 2026-11-26 --> <!-- Red Team (Dokploy): 15 -->
+- **RBAC/audit:** route cron, kênh, quy tắc, ngưỡng CPU/RAM, gửi thử có `x-permission` + audit.
 - **UI:** cron theo app (xem trước 5 lần chạy kế), lịch sử + log; kênh và quy tắc thông báo, nút gửi thử.
 
 ## Files to Create / Modify
@@ -39,7 +40,7 @@ Cron job và lịch backup chạy đúng giờ khi control plane offline, chịu
 3. Tên job theo thời điểm lịch; nhận lại job; kiểm lệch giờ.
 4. Thực thi + kết quả.
 5. Lịch backup.
-6. Kênh + quy tắc thông báo.
+6. Kênh + quy tắc thông báo; cảnh báo ngưỡng CPU/RAM.
 7. RBAC/audit; UI.
 
 ## Todo
@@ -49,6 +50,7 @@ Cron job và lịch backup chạy đúng giờ khi control plane offline, chịu
 - [ ] Thực thi + kết quả
 - [ ] Lịch backup
 - [ ] 4 kênh thông báo + quy tắc
+- [ ] Cảnh báo ngưỡng CPU/RAM có thời gian giữ và chống báo lặp
 - [ ] RBAC/audit cho route mới
 - [ ] UI
 
@@ -58,6 +60,7 @@ Cron job và lịch backup chạy đúng giờ khi control plane offline, chịu
 - Dừng process agent trên leader (dockerd vẫn chạy): agent manager khác tiếp quản trong dưới 1 phút.
 - Tắt control plane 10 phút: 10 lượt vẫn chạy; bật lại có đủ 10 bản ghi lịch sử.
 - Cron exit 1 thì Telegram nhận thông báo trong 1 phút (khi control plane online).
+- Ép CPU một node lên 100% trong 4 phút: không có cảnh báo; giữ 6 phút: đúng một cảnh báo; giữ tiếp 20 phút: không có cảnh báo thứ hai; hạ tải rồi vượt lại sau 30 phút: có cảnh báo mới.
 
 ## Verification
 - Unit test scheduler với clock giả; lab Incus 3 manager: tắt leader, dừng agent leader, tắt control plane, lệch giờ giả.
