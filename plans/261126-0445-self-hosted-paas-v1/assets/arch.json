@@ -1,0 +1,19 @@
+{"schema_version":1,"diagram_type":"architecture","meta":{"title":"Kiến trúc Bennghe","visual_preset":"editorial","theme":"light"},
+"components":[
+{"id":"browser","label":"Trình duyệt (React SPA)","role":"frontend","layer":0},
+{"id":"gitp","label":"GitHub / GitLab / Gitea","role":"external","layer":0},
+{"id":"cp","label":"Control plane Go (TLS, lego, RBAC)","role":"backend","layer":1},
+{"id":"pg","label":"Postgres + River","role":"database","layer":2},
+{"id":"agent","label":"Agent mỗi node (leader áp state cụm)","role":"worker","layer":2},
+{"id":"swarm","label":"Swarm trên WireGuard bn-wg0","role":"backend","layer":3},
+{"id":"traefik","label":"Traefik (file provider)","role":"gateway","layer":4},
+{"id":"s3","label":"S3 / R2 (restic)","role":"storage","layer":4}],
+"boundaries":[{"id":"cluster","label":"Cụm (nhiều nhà cung cấp)","role":"cluster","components":["agent","swarm","traefik"]}],
+"connections":[
+{"from":"browser","to":"cp","label":"REST + WebSocket","kind":"sync"},
+{"from":"gitp","to":"cp","label":"webhook đã ký","kind":"async"},
+{"from":"cp","to":"pg","label":"state, jobs, audit","kind":"sync"},
+{"from":"agent","to":"cp","label":"WebSocket ra ngoài, Ed25519 hai chiều","kind":"bi-directional"},
+{"from":"agent","to":"swarm","label":"Docker API","kind":"sync"},
+{"from":"agent","to":"traefik","label":"file config route + cert","kind":"sync"},
+{"from":"swarm","to":"s3","label":"job backup (secret)","kind":"async"}]}

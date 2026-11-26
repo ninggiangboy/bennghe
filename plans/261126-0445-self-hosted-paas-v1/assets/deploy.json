@@ -1,0 +1,18 @@
+{"schema_version":1,"diagram_type":"lifecycle","meta":{"title":"Vòng đời deployment","visual_preset":"editorial","theme":"light"},
+"states":[
+{"id":"queued","label":"queued (1 rollout/app)","kind":"initial"},
+{"id":"building","label":"cloning → building","kind":"active"},
+{"id":"pushing","label":"pushing (digest)","kind":"active"},
+{"id":"rolling","label":"rolling_out (start-first)","kind":"waiting"},
+{"id":"healthy","label":"healthy","kind":"terminal-success"},
+{"id":"rolledback","label":"rolled_back (về snapshot trước)","kind":"failure-recoverable"},
+{"id":"superseded","label":"superseded","kind":"terminal-cancelled"},
+{"id":"failed","label":"failed","kind":"failure-fatal"}],
+"transitions":[
+{"from":"queued","to":"building","event":"worker nhận job"},
+{"from":"queued","to":"superseded","event":"có bản mới hơn","kind":"cancel"},
+{"from":"building","to":"pushing","event":"build xong"},
+{"from":"building","to":"failed","event":"build lỗi","kind":"fail"},
+{"from":"pushing","to":"rolling","event":"ensure service"},
+{"from":"rolling","to":"healthy","event":"healthcheck đạt"},
+{"from":"rolling","to":"rolledback","event":"healthcheck lỗi","kind":"fail"}]}
