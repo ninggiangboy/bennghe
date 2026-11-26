@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select scope, scope_id, role from memberships where user_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "scope",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "memberships",
+            "name": "scope"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "scope_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "memberships",
+            "name": "scope_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "role",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "memberships",
+            "name": "role"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "4a412721f240df63ff37be144668997023a524e8b2b63681be0e25d296201f0e"
+}

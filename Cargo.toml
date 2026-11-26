@@ -1,0 +1,26 @@
+[workspace]
+resolver = "3"
+members = ["crates/cp", "crates/agent", "crates/proto", "crates/healthcheck", "crates/envexec"]
+
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+license = "AGPL-3.0-only"
+publish = false
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = { level = "deny", priority = -1 }
+
+# Statically linked helpers that are bind-mounted into user containers stay tiny.
+[profile.release]
+opt-level = "z"
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.dev.package."*"]
+opt-level = 1

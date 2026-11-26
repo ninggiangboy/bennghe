@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select actor_token_id::text as \"t\" from audit_events where action = 'project.update' and outcome = 'success'",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "t",
+        "type_info": "Text",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "6344a304b61831036c45581fe5f2471962b846f65898e5c1213aa2c3c2cbdca3"
+}

@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into users (email, display_name, password_hash) values ($1, $2, $3) returning id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "2ff500937e26e81a16e89e75c13c316dee92bed53e68902abd762c0ad36d3643"
+}

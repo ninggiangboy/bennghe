@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into projects (name, slug) values ($1, $1) returning id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "projects",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "2f83714460496c486cf54d14d8bac5321d8a24b363d5ee48ade8e712983c86ff"
+}

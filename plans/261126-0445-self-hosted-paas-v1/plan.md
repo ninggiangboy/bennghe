@@ -1,7 +1,7 @@
 ---
 title: "Self-hosted PaaS v1"
 description: "PaaS mã nguồn mở (AGPL-3.0) tự cài: một control plane Rust + React quản lý nhiều cụm Docker Swarm trên WireGuard (agent Rust ≤ 10 MB RSS), deploy app/compose, database, backup S3/R2, cron, team/RBAC và tích hợp Cloudflare."
-status: pending
+status: in-progress
 priority: P1
 effort: "53w"
 tags: [feature, infra, backend, frontend, api]
@@ -24,7 +24,7 @@ Effort: tổng các phase 43,8 tuần + 20% buffer tích hợp và ổn định 
 
 - Tên sản phẩm **Bennghe** (từ Bến Nghé — bến cảng xưa của Sài Gòn); module `github.com/<org>/bennghe`; prefix kỹ thuật `bn` (nhãn `bn.*`, interface `bn-wg0`, đường dẫn `/var/lib/bennghe-agent`). Cần kiểm tra tên còn trống trên GitHub/domain trước khi public.
 - Open source, self-hosted, single-tenant; một control plane quản lý nhiều cụm. AGPL-3.0.
-- **Rust cho control plane + agent** (người dùng chốt 2026-11-26, thay quyết định Go trước đó); React + Vite cho UI (nhúng vào binary bằng `rust-embed`). Lý do duy nhất: agent phải ≤ 10 MB RSS khi rảnh trên VPS 512 MB. **Quyết định có điều kiện:** hiệu lực sau khi cổng spike ở phase 1 đạt; nếu agent Rust không đạt 10 MB hoặc agent Go đã ≤ 10 MB thì dừng và hỏi người dùng. Hệ quả đã chấp nhận: API chuyển từ spec-first sang code-first (`utoipa` sinh spec, `x-permission` vẫn bắt buộc), compose parser và bước DNS-01 Cloudflare tự viết, `buildctl` chạy trong container thay cho BuildKit client, AI viết code nên người dùng chịu việc review/gỡ lỗi Rust.
+- **Rust cho control plane + agent** (người dùng chốt 2026-11-26, thay quyết định Go trước đó); React + Vite cho UI (nhúng vào binary bằng `rust-embed`). Lý do duy nhất: agent phải ≤ 10 MB RSS khi rảnh trên VPS 512 MB. **Quyết định có điều kiện — đã xác nhận:** spike phase 1 đạt (Rust 1,2 MB; Go 8–9 MB nên người dùng chốt giữ Rust vì độ dư, 2026-11-26); nếu agent Rust không đạt 10 MB hoặc agent Go đã ≤ 10 MB thì dừng và hỏi người dùng. Hệ quả đã chấp nhận: API chuyển từ spec-first sang code-first (`utoipa` sinh spec, `x-permission` vẫn bắt buộc), compose parser và bước DNS-01 Cloudflare tự viết, `buildctl` chạy trong container thay cho BuildKit client, AI viết code nên người dùng chịu việc review/gỡ lỗi Rust.
 - Control plane + agent; agent kết nối ra (WebSocket + TLS), xác thực hai chiều Ed25519, desired state có chữ ký.
 - Mỗi cụm là Docker Swarm trên WireGuard full mesh; node có thể khác nhà cung cấp.
 - Registry nội bộ mỗi cụm + build node.
@@ -38,7 +38,7 @@ Effort: tổng các phase 43,8 tuần + 20% buffer tích hợp và ổn định 
 
 | # | Phase | Status | Depends on |
 |---|-------|--------|------------|
-| 1 | [Foundation](./phase-01-foundation.md) | Pending | — |
+| 1 | [Foundation](./phase-01-foundation.md) | In progress — mã xong và qua test; 5 mục kiểm chứng còn mở (xem phase) | — |
 | 2 | [Agent & Transport](./phase-02-agent-transport.md) | Pending | 1 |
 | 3 | [Cluster Networking](./phase-03-cluster-networking.md) — alpha1 | Pending | 2 |
 | 4 | [Ingress & Certificates](./phase-04-ingress-certificates.md) | Pending | 3 |
@@ -83,7 +83,7 @@ Rust + React/Vite; AGPL-3.0; control plane và Traefik không mount Docker socke
 | Swarm còn được duy trì trong vòng đời v1 (đã xác nhận: Mirantis hỗ trợ tới khoảng 2030, Engine 29.10.1 ra 2026-11-24) | Thông báo ngừng hỗ trợ sau thương vụ IREN mua Mirantis | Dừng và lập lại plan cho lớp runtime |
 | Rolling update 0 request lỗi (Swarm chờ HEALTHCHECK đã xác nhận; Traefik route tới VIP của service) | Test k6 phase 5 có request lỗi | Thêm retry middleware cho request idempotent; nếu vẫn lỗi thì hỏi người dùng hạ mục tiêu |
 | MTU wg0 1420 phù hợp mọi nhà cung cấp; `default-network-opts` áp cho mọi overlay | Test tải 50 MB phase 3/9 treo | Đo path MTU trước khi join; transform đặt MTU tường minh |
-| Agent Rust rảnh ≤ 10 MB RSS trên VM 512 MB (spike phase 1; chưa đo) | Spike đo trên 10 MB, hoặc agent Go cùng điều kiện đã ≤ 10 MB | Dừng, báo người dùng; không tự đổi ngôn ngữ |
+| Agent Rust rảnh ≤ 10 MB RSS trên VM 512 MB (spike phase 1: 1,2 MB trên aarch64 trong cgroup 512 MB; `x86_64` và Incus chưa đo) | Spike đo trên 10 MB, hoặc agent Go cùng điều kiện đã ≤ 10 MB | Dừng, báo người dùng; không tự đổi ngôn ngữ |
 | `bollard` đủ cho Swarm (`ReplicatedJob`, `update_service`) với Docker API ≥ 1.44 (các hàm có trên docs.rs; hành vi chưa thử) | Spike phase 1 hoặc lab phase 3/5 đỏ | Gọi Docker CLI cho thao tác thiếu, hoặc vá `bollard` |
 | Enqueue job trong cùng transaction với thao tác (chưa kiểm với `graphile_worker`) | Spike phase 1 đỏ | Tự viết bảng `jobs` với `SKIP LOCKED` (thêm ~1 tuần) |
 | `utoipa` xuất được `x-permission` (tài liệu `extensions(...)` có; chưa thử) | Spike phase 1 đỏ | Hậu xử lý spec từ bảng route trong `rbac` |

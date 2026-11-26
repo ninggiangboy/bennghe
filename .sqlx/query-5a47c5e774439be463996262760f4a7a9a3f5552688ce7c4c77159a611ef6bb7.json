@@ -1,0 +1,76 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select t.id, t.user_id, t.role, t.project_ids, t.last_used_at as \"last_used_at: DateTime<Utc>\"\n           from api_tokens t join users u on u.id = t.user_id\n          where t.token_hash = $1 and t.revoked_at is null and t.expires_at > now() and u.disabled_at is null",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "api_tokens",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "user_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "api_tokens",
+            "name": "user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "role",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "api_tokens",
+            "name": "role"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "project_ids",
+        "type_info": "UuidArray",
+        "origin": {
+          "Table": {
+            "table": "api_tokens",
+            "name": "project_ids"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "last_used_at: DateTime<Utc>",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "api_tokens",
+            "name": "last_used_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bytea"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "5a47c5e774439be463996262760f4a7a9a3f5552688ce7c4c77159a611ef6bb7"
+}

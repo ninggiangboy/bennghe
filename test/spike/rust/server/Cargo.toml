@@ -1,0 +1,13 @@
+[package]
+name = "bn-spike-server"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "net", "macros", "time"] }
+tokio-tungstenite = "0.30"
+tokio-rustls = { version = "0.26", default-features = false, features = ["ring"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+rcgen = "0.14"
+futures-util = "0.3"

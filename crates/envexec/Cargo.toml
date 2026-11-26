@@ -1,0 +1,10 @@
+[package]
+name = "bn-envexec"
+description = "Static launcher that injects secrets into a container process (stub until phase 5)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true

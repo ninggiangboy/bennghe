@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select count(*) as \"n!\" from memberships where scope = 'project'",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "n!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "30e954ae55f45c57c4317e96c3775226951b9ff2fd45097ad4cb5f9f09e8519e"
+}

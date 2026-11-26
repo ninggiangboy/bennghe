@@ -1,0 +1,10 @@
+[package]
+name = "bn-healthcheck"
+description = "Tiny static health probe bind-mounted into user containers (stub until phase 5)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true

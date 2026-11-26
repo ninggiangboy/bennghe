@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into encryption_keys (key_id, canary_ciphertext) values ($1, $2) on conflict do nothing",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Bytea"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "30826ebd90e301a8bf06da9af52a5e03edafa8526f092d82be7d48ddbbc31032"
+}

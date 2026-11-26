@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update sessions set last_verified_at = now() where id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c0d310fb4e6f786f04b9437e19136afa9e4d2e5f5e52673cd955992f1c2e73d0"
+}

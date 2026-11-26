@@ -8,12 +8,20 @@ The name comes from Bến Nghé, the old wharf of Saigon.
 
 ## Status
 
-Planning. No code exists yet. The active implementation plan is
+Early development. The foundation is in place: a Rust control plane with sign-in, two-factor
+authentication, role-based access control, audit, API tokens and its own TLS, plus a React web UI.
+The agent, clusters, builds and deploys come in the following phases. The active implementation plan is
 [`plans/261126-0445-self-hosted-paas-v1/plan.md`](plans/261126-0445-self-hosted-paas-v1/plan.md)
 (rendered view: [`plan.html`](plans/261126-0445-self-hosted-paas-v1/plan.html)).
 
+## Building and running
+
+See [Development](docs/development.md) for building, testing and running from a checkout, and
+`deploy/install-controlplane.sh` for installing the control plane on a server.
+
 ## Documentation
 
+- [Development](docs/development.md) — build, test, run, and the access-control gate.
 - [Project overview](docs/project-overview.md) — what Bennghe is for, who it
   serves, what it deliberately does not do, and the terms used across the project.
 - [System architecture](docs/system-architecture.md) — system boundaries and the

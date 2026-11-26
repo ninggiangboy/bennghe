@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into audit_events\n           (actor_user_id, actor_token_id, actor_ip, action, scope, scope_id, resource_type, resource_id, outcome, reason, metadata)\n         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Jsonb"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "dcfa3f1a5b8eb2bff05b1df3a15255ce447da6f468dd5d14bb57b587ba5019a1"
+}

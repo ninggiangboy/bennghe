@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update setup_tokens set used_at = now() where token_hash = $1 and used_at is null",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Bytea"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "201f2a84f87bb5de35e66adecd898e0ec0d3e869c64d533709880d546feb39ac"
+}

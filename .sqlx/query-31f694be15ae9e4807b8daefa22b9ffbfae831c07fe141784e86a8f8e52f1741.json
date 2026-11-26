@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update api_tokens set revoked_at = now()\n          where $1 = any(project_ids) and cardinality(project_ids) = 1 and revoked_at is null and ($2::uuid is null or user_id = $2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "31f694be15ae9e4807b8daefa22b9ffbfae831c07fe141784e86a8f8e52f1741"
+}

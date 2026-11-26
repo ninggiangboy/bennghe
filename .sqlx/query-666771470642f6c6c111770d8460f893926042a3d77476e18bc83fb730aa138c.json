@@ -1,0 +1,91 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into projects (name, slug, description, created_by) values ($1, $2, $3, $4)\n           returning id, name, slug, description, created_at as \"created_at: DateTime<Utc>\", updated_at as \"updated_at: DateTime<Utc>\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "projects",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "projects",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "slug",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "projects",
+            "name": "slug"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "description",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "projects",
+            "name": "description"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "created_at: DateTime<Utc>",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "projects",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "updated_at: DateTime<Utc>",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "projects",
+            "name": "updated_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "666771470642f6c6c111770d8460f893926042a3d77476e18bc83fb730aa138c"
+}

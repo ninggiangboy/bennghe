@@ -1,0 +1,76 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select s.id, s.user_id, s.stage, s.csrf_token, s.last_verified_at as \"last_verified_at: DateTime<Utc>\"\n           from sessions s join users u on u.id = s.user_id\n          where s.token_hash = $1 and s.expires_at > now() and u.disabled_at is null",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "sessions",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "user_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "sessions",
+            "name": "user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "stage",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sessions",
+            "name": "stage"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "csrf_token",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sessions",
+            "name": "csrf_token"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "last_verified_at: DateTime<Utc>",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "sessions",
+            "name": "last_verified_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bytea"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "9553ff07956e17da750bf6c172f4e8001e667d51d06d5b4159eb81498b1dbc59"
+}

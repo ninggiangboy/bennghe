@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select key_id from encryption_keys",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "key_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "encryption_keys",
+            "name": "key_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "c24725dcc60bdca362c83d7dd73f7f9b3f2c499bf19740bb9fff321d30ca3fb9"
+}

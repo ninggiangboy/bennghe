@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select value from settings where key = 'require_2fa_for_admins'",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "value",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "settings",
+            "name": "value"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "b1b691a7c270743ebec710acd3154dc387f5dd8912077201fb8dc8e06dc98385"
+}

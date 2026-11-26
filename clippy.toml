@@ -1,0 +1,2 @@
+# Handlers and tests are allowed to be long; the gate is `-D warnings` on the default lint set.
+msrv = "1.88"

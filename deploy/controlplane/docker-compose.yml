@@ -1,0 +1,57 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Control plane and its database. Configuration comes from the .env file that
+# install-controlplane.sh writes next to this file.
+services:
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bennghe
+      POSTGRES_DB: bennghe
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?run install-controlplane.sh first}
+    volumes:
+      - bn-pgdata:/var/lib/postgresql
+    # No published port: only the control plane reaches the database.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bennghe -d bennghe"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  controlplane:
+    image: ${BN_IMAGE:-bennghe/controlplane:dev}
+    build:
+      context: ../..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      BN_DATABASE_URL: postgres://bennghe:${POSTGRES_PASSWORD}@postgres:5432/bennghe
+      BN_PUBLIC_DOMAIN: ${BN_PUBLIC_DOMAIN:?run install-controlplane.sh first}
+      BN_ACME_EMAIL: ${BN_ACME_EMAIL:-}
+      BN_TLS_MODE: ${BN_TLS_MODE:-acme}
+      BN_ACME_DIRECTORY: ${BN_ACME_DIRECTORY:-https://acme-v02.api.letsencrypt.org/directory}
+      BN_HTTP_ADDR: 0.0.0.0:80
+      BN_HTTPS_ADDR: 0.0.0.0:443
+    ports:
+      - "80:80"
+      - "443:443"
+    # The process runs unprivileged yet must bind ports 80 and 443.
+    sysctls:
+      net.ipv4.ip_unprivileged_port_start: 0
+    volumes:
+      # master.key and signing.key live here. Back up master.key: without it every stored
+      # secret is unrecoverable.
+      - bn-data:/data
+    # The control plane does not get the Docker socket, on purpose.
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/api/v1/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+
+volumes:
+  bn-pgdata:
+  bn-data:

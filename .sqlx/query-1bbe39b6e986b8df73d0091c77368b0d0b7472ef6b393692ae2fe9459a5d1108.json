@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select email, display_name from users where id = $1 and disabled_at is null",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "email",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "email"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "display_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "display_name"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "1bbe39b6e986b8df73d0091c77368b0d0b7472ef6b393692ae2fe9459a5d1108"
+}

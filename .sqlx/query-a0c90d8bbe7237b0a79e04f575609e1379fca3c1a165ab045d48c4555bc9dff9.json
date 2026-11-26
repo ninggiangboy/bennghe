@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update api_tokens set project_ids = array_remove(project_ids, $1)\n          where $1 = any(project_ids) and cardinality(project_ids) > 1 and ($2::uuid is null or user_id = $2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a0c90d8bbe7237b0a79e04f575609e1379fca3c1a165ab045d48c4555bc9dff9"
+}

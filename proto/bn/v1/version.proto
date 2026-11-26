@@ -1,0 +1,11 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+syntax = "proto3";
+
+package bn.v1;
+
+// Protocol version carried in the first frame of every agent connection.
+// Phase 2 builds the full agent protocol on top of this package.
+message ProtocolVersion {
+  uint32 major = 1;
+  uint32 minor = 2;
+}

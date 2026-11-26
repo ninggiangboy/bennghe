@@ -1,0 +1,1024 @@
+openapi: 3.1.0
+info:
+  title: Bennghe API
+  description: Control plane API. Every operation declares `x-permission` with the action, the scope it applies to and whether it needs a recent re-authentication.
+  license:
+    name: AGPL-3.0-only
+  version: 0.0.0
+paths:
+  /api/v1/account/api-tokens:
+    get:
+      tags:
+      - account
+      operationId: account_token_list
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiTokenInfo'
+      x-permission:
+        action: account.api_token.list
+        scope: self
+    post:
+      tags:
+      - account
+      operationId: account_token_create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTokenRequest'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedToken'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+      x-permission:
+        action: account.api_token.create
+        reauth: true
+        scope: self
+  /api/v1/account/api-tokens/{token_id}:
+    delete:
+      tags:
+      - account
+      operationId: account_token_revoke
+      parameters:
+      - name: token_id
+        in: path
+        description: Token to revoke
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '204':
+          description: Revoked
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+      x-permission:
+        action: account.api_token.revoke
+        scope: self
+  /api/v1/account/totp:
+    post:
+      tags:
+      - account
+      operationId: account_totp_begin
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TotpEnrolment'
+        '409':
+          description: Already enabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+      x-permission:
+        action: account.totp.begin
+        scope: self
+    delete:
+      tags:
+      - account
+      operationId: account_totp_disable
+      responses:
+        '204':
+          description: Disabled
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+      x-permission:
+        action: account.totp.disable
+        reauth: true
+        scope: self
+  /api/v1/account/totp/confirm:
+    post:
+      tags:
+      - account
+      operationId: account_totp_confirm
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CodeRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoveryCodes'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+      x-permission:
+        action: account.totp.confirm
+        scope: self
+  /api/v1/audit-events:
+    get:
+      tags:
+      - audit
+      operationId: admin_audit_list
+      parameters:
+      - name: limit
+        in: path
+        description: Page size, 1 to 200. Defaults to 50.
+        required: true
+        schema:
+          type:
+          - integer
+          - 'null'
+          format: int64
+      - name: before_id
+        in: path
+        description: Return events older than this id (from the previous page).
+        required: true
+        schema:
+          type:
+          - integer
+          - 'null'
+          format: int64
+      responses:
+        '200':
+          description: Newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditEvent'
+      x-permission:
+        action: audit.read
+        scope: global
+  /api/v1/auth/login:
+    post:
+      tags:
+      - auth
+      operationId: session_login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      responses:
+        '200':
+          description: Signed in, or a second factor is required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Wrong email or password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+        '429':
+          description: Too many attempts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+      x-permission:
+        action: auth.login
+        scope: public
+  /api/v1/auth/login/totp:
+    post:
+      tags:
+      - auth
+      operationId: session_login_totp
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CodeRequest'
+        required: true
+      responses:
+        '200':
+          description: Signed in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: No pending sign-in, or the code is wrong
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+        '429':
+          description: Too many attempts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+      x-permission:
+        action: auth.login_totp
+        scope: public
+  /api/v1/auth/logout:
+    post:
+      tags:
+      - auth
+      operationId: session_logout
+      responses:
+        '204':
+          description: Signed out
+      x-permission:
+        action: auth.logout
+        scope: self
+  /api/v1/auth/reauth:
+    post:
+      tags:
+      - auth
+      operationId: session_reauth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReauthRequest'
+        required: true
+      responses:
+        '204':
+          description: Confirmed
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+      x-permission:
+        action: auth.reauth
+        scope: self
+  /api/v1/auth/session:
+    get:
+      tags:
+      - auth
+      operationId: session_current_session
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionInfo'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+      x-permission:
+        action: auth.session.read
+        scope: self
+  /api/v1/health:
+    get:
+      tags:
+      - system
+      operationId: health_health
+      responses:
+        '200':
+          description: The control plane is up
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+      x-permission:
+        action: health.read
+        scope: public
+  /api/v1/projects:
+    get:
+      tags:
+      - projects
+      operationId: projects_list
+      responses:
+        '200':
+          description: Projects the caller can see
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+      x-permission:
+        action: project.list
+        scope: self
+    post:
+      tags:
+      - projects
+      operationId: projects_create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProject'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+      x-permission:
+        action: project.create
+        scope: global
+  /api/v1/projects/{project_id}:
+    get:
+      tags:
+      - projects
+      operationId: projects_get
+      parameters:
+      - name: project_id
+        in: path
+        description: Project id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+      x-permission:
+        action: project.read
+        scope: project
+    delete:
+      tags:
+      - projects
+      operationId: projects_delete
+      parameters:
+      - name: project_id
+        in: path
+        description: Project id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '204':
+          description: Deleted
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+      x-permission:
+        action: project.delete
+        reauth: true
+        scope: project
+    patch:
+      tags:
+      - projects
+      operationId: projects_update
+      parameters:
+      - name: project_id
+        in: path
+        description: Project id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProject'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+      x-permission:
+        action: project.update
+        scope: project
+  /api/v1/projects/{project_id}/members:
+    get:
+      tags:
+      - projects
+      operationId: projects_members
+      parameters:
+      - name: project_id
+        in: path
+        description: Project id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Member'
+      x-permission:
+        action: project.member.list
+        scope: project
+  /api/v1/projects/{project_id}/members/{user_id}:
+    put:
+      tags:
+      - projects
+      operationId: projects_set_member
+      parameters:
+      - name: project_id
+        in: path
+        description: Project id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: user_id
+        in: path
+        description: User to add or change
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetMember'
+        required: true
+      responses:
+        '204':
+          description: Role set
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+      x-permission:
+        action: project.member.set
+        scope: project
+    delete:
+      tags:
+      - projects
+      operationId: projects_remove_member
+      parameters:
+      - name: project_id
+        in: path
+        description: Project id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: user_id
+        in: path
+        description: User to remove
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '204':
+          description: Removed
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+      x-permission:
+        action: project.member.remove
+        scope: project
+  /api/v1/settings/security:
+    get:
+      tags:
+      - settings
+      operationId: admin_security_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecuritySettings'
+      x-permission:
+        action: settings.read
+        scope: global
+    put:
+      tags:
+      - settings
+      operationId: admin_security_put
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SecuritySettings'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecuritySettings'
+      x-permission:
+        action: settings.update
+        scope: global
+  /api/v1/setup:
+    post:
+      tags:
+      - setup
+      operationId: setup_create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetupRequest'
+        required: true
+      responses:
+        '200':
+          description: Owner created and signed in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '403':
+          description: Missing or wrong setup token, or setup already done
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+      x-permission:
+        action: setup.create
+        scope: public
+  /api/v1/setup/status:
+    get:
+      tags:
+      - setup
+      operationId: setup_status
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetupStatus'
+      x-permission:
+        action: setup.status
+        scope: public
+  /api/v1/users/{user_id}/totp/reset:
+    post:
+      tags:
+      - users
+      operationId: admin_totp_reset
+      parameters:
+      - name: user_id
+        in: path
+        description: User whose second factor is removed
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '204':
+          description: Reset
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+      x-permission:
+        action: user.totp_reset
+        reauth: true
+        scope: global
+components:
+  schemas:
+    ApiTokenInfo:
+      type: object
+      required:
+      - id
+      - name
+      - hint
+      - role
+      - project_ids
+      - expires_at
+      - created_at
+      properties:
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        hint:
+          type: string
+          description: Last four characters, to recognise the token.
+        id:
+          type: string
+          format: uuid
+        last_used_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        name:
+          type: string
+        project_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        revoked_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        role:
+          type: string
+    AuditEvent:
+      type: object
+      required:
+      - id
+      - occurred_at
+      - action
+      - scope
+      - outcome
+      - metadata
+      properties:
+        action:
+          type: string
+        actor_ip:
+          type:
+          - string
+          - 'null'
+        actor_token_id:
+          type:
+          - string
+          - 'null'
+          format: uuid
+        actor_user_id:
+          type:
+          - string
+          - 'null'
+          format: uuid
+        id:
+          type: integer
+          format: int64
+        metadata: {}
+        occurred_at:
+          type: string
+          format: date-time
+        outcome:
+          type: string
+          description: '`success` or `denied`.'
+        reason:
+          type:
+          - string
+          - 'null'
+        resource_id:
+          type:
+          - string
+          - 'null'
+        resource_type:
+          type:
+          - string
+          - 'null'
+        scope:
+          type: string
+        scope_id:
+          type:
+          - string
+          - 'null'
+          format: uuid
+    CodeRequest:
+      type: object
+      required:
+      - code
+      properties:
+        code:
+          type: string
+          description: A 6-digit authenticator code or an unused recovery code.
+    CreateProject:
+      type: object
+      required:
+      - name
+      - slug
+      properties:
+        description:
+          type:
+          - string
+          - 'null'
+        name:
+          type: string
+        slug:
+          type: string
+          description: Lowercase letters, digits and hyphens, up to 40 characters.
+    CreateTokenRequest:
+      type: object
+      required:
+      - name
+      - project_ids
+      - role
+      - expires_in_days
+      properties:
+        expires_in_days:
+          type: integer
+          format: int64
+          description: Lifetime in days, 1 to 365.
+        name:
+          type: string
+        project_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Projects the token may act in. Each must be one the creator belongs to.
+        role:
+          type: string
+          description: 'Highest role the token may use: `admin`, `developer` or `viewer`.'
+    CreatedToken:
+      type: object
+      required:
+      - id
+      - token
+      - expires_at
+      properties:
+        expires_at:
+          type: string
+          format: date-time
+        id:
+          type: string
+          format: uuid
+        token:
+          type: string
+          description: The token itself. It is never shown again.
+    ErrorBody:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Stable identifier clients can switch on, for example `REAUTH_REQUIRED`.
+        message:
+          type: string
+    Health:
+      type: object
+      required:
+      - status
+      - version
+      properties:
+        status:
+          type: string
+        version:
+          type: string
+    LoginRequest:
+      type: object
+      required:
+      - email
+      - password
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+    LoginResponse:
+      type: object
+      required:
+      - status
+      properties:
+        csrf_token:
+          type:
+          - string
+          - 'null'
+          description: Send as `X-CSRF-Token` on every non-GET request. Present only when `status` is `ok`.
+        status:
+          type: string
+          description: '`ok` once signed in, or `totp_required` when a code is still needed.'
+    Member:
+      type: object
+      required:
+      - user_id
+      - email
+      - display_name
+      - role
+      properties:
+        display_name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        user_id:
+          type: string
+          format: uuid
+    Project:
+      type: object
+      required:
+      - id
+      - name
+      - slug
+      - description
+      - created_at
+      - updated_at
+      properties:
+        created_at:
+          type: string
+          format: date-time
+        description:
+          type: string
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+        updated_at:
+          type: string
+          format: date-time
+    ReauthRequest:
+      type: object
+      properties:
+        code:
+          type:
+          - string
+          - 'null'
+          description: Authenticator or recovery code; accepted instead of the password when 2FA is enabled.
+        password:
+          type:
+          - string
+          - 'null'
+    RecoveryCodes:
+      type: object
+      required:
+      - recovery_codes
+      properties:
+        recovery_codes:
+          type: array
+          items:
+            type: string
+          description: Shown once. Each works a single time if the authenticator is lost.
+    SecuritySettings:
+      type: object
+      required:
+      - require_2fa_for_admins
+      properties:
+        require_2fa_for_admins:
+          type: boolean
+          description: Owners and admins must enable two-factor authentication before doing anything else.
+    SessionInfo:
+      type: object
+      required:
+      - user
+      - csrf_token
+      - totp_enabled
+      - must_enrol_2fa
+      - reauth_valid_until
+      properties:
+        csrf_token:
+          type: string
+        global_role:
+          type:
+          - string
+          - 'null'
+        must_enrol_2fa:
+          type: boolean
+          description: |-
+            True when the installation requires a second factor and this user has not enabled one;
+            the interface must send them to enrolment before anything else.
+        reauth_valid_until:
+          type: string
+          format: date-time
+          description: Until when sensitive operations are allowed without asking for the password again.
+        totp_enabled:
+          type: boolean
+        user:
+          $ref: '#/components/schemas/UserSummary'
+    SetMember:
+      type: object
+      required:
+      - role
+      properties:
+        role:
+          type: string
+          description: '`admin`, `developer` or `viewer`. Owner is an installation-wide role and cannot be set here.'
+    SetupRequest:
+      type: object
+      required:
+      - token
+      - email
+      - password
+      properties:
+        display_name:
+          type:
+          - string
+          - 'null'
+        email:
+          type: string
+        password:
+          type: string
+        token:
+          type: string
+          description: The one-time token printed on the host by the install script.
+    SetupStatus:
+      type: object
+      required:
+      - needs_setup
+      properties:
+        needs_setup:
+          type: boolean
+    TotpEnrolment:
+      type: object
+      required:
+      - secret
+      - otpauth_uri
+      properties:
+        otpauth_uri:
+          type: string
+          description: '`otpauth://` URI to render as a QR code.'
+        secret:
+          type: string
+          description: Base32 secret for manual entry.
+    UpdateProject:
+      type: object
+      properties:
+        description:
+          type:
+          - string
+          - 'null'
+        name:
+          type:
+          - string
+          - 'null'
+    UserSummary:
+      type: object
+      required:
+      - id
+      - email
+      - display_name
+      properties:
+        display_name:
+          type: string
+        email:
+          type: string
+        id:
+          type: string
+          format: uuid
+  securitySchemes:
+    bearer_token:
+      type: http
+      scheme: bearer
+    csrf_token:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+    session_cookie:
+      type: apiKey
+      in: cookie
+      name: __Host-bn_sid

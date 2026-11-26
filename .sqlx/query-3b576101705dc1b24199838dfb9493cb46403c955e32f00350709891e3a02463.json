@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into memberships (user_id, scope, role) values ($1, 'global', $2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3b576101705dc1b24199838dfb9493cb46403c955e32f00350709891e3a02463"
+}

@@ -1,0 +1,78 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  DATABASE_URL: postgres://bennghe:bennghe@127.0.0.1:5432/bennghe
+
+jobs:
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Run as a plain container because every test gets its own database and connections, so
+      # the default connection limit is too low and a service container cannot change it.
+      - name: Start Postgres
+        run: |
+          docker run -d --name pg -p 5432:5432 -e POSTGRES_USER=bennghe -e POSTGRES_PASSWORD=bennghe \
+            -e POSTGRES_DB=bennghe postgres:18 -c max_connections=600
+          for i in $(seq 1 30); do docker exec pg pg_isready -U bennghe && break; sleep 1; done
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest,cargo-deny,sqlx-cli
+
+      - run: cargo fmt --all --check
+      - name: Clippy (offline query data, no database needed)
+        run: SQLX_OFFLINE=true cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo deny check
+
+      - name: Committed artefacts are current
+        run: |
+          sqlx migrate run --source migrations
+          BN_UPDATE_OPENAPI=1 cargo test -p bn-cp --lib committed_openapi_matches_the_code
+          cargo sqlx prepare --workspace -- --all-targets
+          git diff --exit-code -- api/openapi.yaml .sqlx
+
+      - name: Tests
+        run: cargo nextest run --workspace
+
+      - name: Access-control gate
+        run: cargo nextest run -p bn-cp rbac::all_routes
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - name: Generated API types are current
+        run: |
+          pnpm gen
+          git diff --exit-code -- src/api/schema.d.ts
+      - run: pnpm build

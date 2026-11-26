@@ -1,0 +1,39 @@
+# Dependency policy. Bennghe is AGPL-3.0-only, so every dependency must be under a licence that
+# can be combined with it. Run with `cargo deny check`.
+[graph]
+all-features = false
+
+[licenses]
+confidence-threshold = 0.9
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-3.0",
+    "Zlib",
+    "CC0-1.0",
+    "BSL-1.0",
+    "CDLA-Permissive-2.0",
+    "AGPL-3.0-only",
+]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+allow-wildcard-paths = true
+
+[advisories]
+unmaintained = "workspace"
+yanked = "deny"
+ignore = [
+    # `chrono` is flagged unmaintained, not vulnerable. `sqlx` and `graphile_worker` depend on it, so
+    # it cannot be removed from the tree. Revisit when either moves to `time` or `jiff`.
+    "RUSTSEC-2026-0543",
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

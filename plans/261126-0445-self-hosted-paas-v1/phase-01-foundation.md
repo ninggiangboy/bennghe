@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: "Foundation"
-status: pending
+status: in-progress
 priority: P1
 effort: "5.5w"
 dependencies: []
@@ -65,20 +65,21 @@ Có monorepo Rust chạy được và **đã qua cổng spike RAM của agent**:
 10. SPA shell; compose + install script; lab Incus.
 
 ## Todo
-- [ ] **Spike RAM agent đạt ≤ 10 MB và báo cáo đã ghi (cổng chặn)**
-- [ ] Workspace, Makefile, clippy/fmt/deny, CI
-- [ ] Migration timestamp, sqlx offline, job queue
-- [ ] Secrets, định danh control plane, setup token
-- [ ] Auth
-- [ ] 2FA TOTP + mã khôi phục + bắt buộc cho owner/admin
-- [ ] Xác thực lại 5 phút cho route `reauth: true`
-- [ ] API token cho CI (scope project, hạn dùng, thu hồi)
-- [ ] RBAC + `x-permission` + cổng `all_routes`
-- [ ] Audit thành công + bị từ chối + đọc nhạy cảm
-- [ ] `events.Emit`
-- [ ] Cert tự phục vụ cho control plane
-- [ ] `netpolicy`
-- [ ] SPA, compose, install script, lab Incus
+- [x] **Spike RAM agent** — chạy 2026-11-26, [báo cáo](../reports/spike-agent-memory-261126.md): Rust 1,2 MB, bốn giả định đạt; Go cùng điều kiện 8,0–9,2 MB (đỉnh 10,5–12,2 MB) chạm điều kiện dừng; **người dùng chốt giữ Rust** (2026-11-26) vì độ dư. Còn nợ: đo `x86_64` và trên VM Incus thật khi lab chạy được (tiêu chí thành công ở phase 2). Mã Go đã xoá.
+- [x] Workspace, Makefile, clippy/fmt/deny, CI (`.github/workflows/ci.yml` chưa chạy trên GitHub)
+- [x] Migration timestamp, sqlx offline, job queue (`graphile_worker`, enqueue cùng transaction đã có test)
+- [x] Secrets, định danh control plane, setup token
+- [x] Auth (setup có token, login, session, CSRF, rate limit)
+- [x] 2FA TOTP + mã khôi phục + bắt buộc cho owner/admin (+ `controlplane admin reset-2fa`)
+- [x] Xác thực lại 5 phút cho route `reauth: true`
+- [x] API token cho CI (scope project, hạn dùng, thu hồi, vai trò tính theo request)
+- [x] RBAC + `x-permission` + cổng `all_routes`
+- [x] Audit thành công + bị từ chối (+ đọc nhạy cảm chưa có route nào tới phase 7)
+- [x] `events::emit`
+- [x] Cert tự phục vụ cho control plane (đã thử với Pebble: cấp, phục vụ HTTPS, dùng lại sau khi khởi động lại)
+- [x] `netpolicy`
+- [x] SPA (đăng nhập, setup, dự án, bảo mật: 2FA, API token, xác thực lại)
+- [ ] Còn mở, chưa kiểm chứng được trong phiên này: (1) build image `deploy/Dockerfile` (đĩa VM Docker đầy; tầng web đã qua, tầng Rust chưa); (2) `install-controlplane.sh` trên VM sạch (<5 phút tới HTTPS); (3) `test/lab/incus-up.sh` dựng 3 VM (<10 phút) — máy hiện tại không có Incus; (4) đo `x86_64` và trên VM Incus cho RSS agent; (5) `make build` (release, LTO) chưa chạy.
 
 ## Success Criteria
 - Báo cáo spike ghi RSS rảnh của agent Rust ≤ 10 MB trên VM 512 MB, kèm số của agent Go cùng điều kiện; bốn giả định (bollard, job trong transaction, `x-permission` qua utoipa, WireGuard) đều có kết quả đạt hoặc có quyết định thay thế bằng văn bản.

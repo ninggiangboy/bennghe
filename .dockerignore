@@ -1,0 +1,9 @@
+.git
+target
+**/out
+**/node_modules
+web/dist
+plans
+docs
+test
+.claude

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into user_totp (user_id, secret_ciphertext, key_id, confirmed_at) values ($1, '\\x00', 'k1', now())",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9b716a5cb02559fd686668fad88781f2355adec73b4944c01def12ac1cc245e3"
+}

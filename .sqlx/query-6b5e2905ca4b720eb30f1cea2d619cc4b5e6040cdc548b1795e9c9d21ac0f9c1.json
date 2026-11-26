@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from memberships where scope = 'project' and scope_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6b5e2905ca4b720eb30f1cea2d619cc4b5e6040cdc548b1795e9c9d21ac0f9c1"
+}

@@ -1,0 +1,9 @@
+# Build output
+target/
+out/
+dist/
+node_modules/
+.DS_Store
+
+# Written by deploy/install-controlplane.sh; holds the database password.
+deploy/controlplane/.env

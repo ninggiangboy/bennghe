@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select secret_ciphertext, key_id, last_used_step from user_totp where user_id = $1 and confirmed_at is not null",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "secret_ciphertext",
+        "type_info": "Bytea",
+        "origin": {
+          "Table": {
+            "table": "user_totp",
+            "name": "secret_ciphertext"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "key_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "user_totp",
+            "name": "key_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "last_used_step",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "user_totp",
+            "name": "last_used_step"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "396e010f411b686968b396143bde9ba4eedfe81c8560a3c1363e75bc10adab38"
+}

@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into user_totp (user_id, secret_ciphertext, key_id) values ($1, $2, $3)\n         on conflict (user_id) do update\n            set secret_ciphertext = excluded.secret_ciphertext, key_id = excluded.key_id, last_used_step = 0, created_at = now()\n          where user_totp.confirmed_at is null",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Bytea",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "fb13b9f75fa5dad54ddefa3a14b8ddf23f9fc6407b7a6b60725223de9d8055ba"
+}

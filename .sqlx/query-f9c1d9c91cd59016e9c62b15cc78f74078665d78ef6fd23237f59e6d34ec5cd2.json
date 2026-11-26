@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select token_hash from setup_tokens",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "token_hash",
+        "type_info": "Bytea",
+        "origin": {
+          "Table": {
+            "table": "setup_tokens",
+            "name": "token_hash"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "f9c1d9c91cd59016e9c62b15cc78f74078665d78ef6fd23237f59e6d34ec5cd2"
+}

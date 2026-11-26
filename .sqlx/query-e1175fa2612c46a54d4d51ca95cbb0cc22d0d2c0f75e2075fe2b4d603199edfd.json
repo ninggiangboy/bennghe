@@ -1,0 +1,124 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select id, name, token_hint, role, project_ids,\n                  expires_at as \"expires_at: DateTime<Utc>\", last_used_at as \"last_used_at: DateTime<Utc>\",\n                  revoked_at as \"revoked_at: DateTime<Utc>\", created_at as \"created_at: DateTime<Utc>\"\n             from api_tokens where user_id = $1 order by created_at desc",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "api_tokens",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "api_tokens",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "token_hint",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "api_tokens",
+            "name": "token_hint"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "role",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "api_tokens",
+            "name": "role"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "project_ids",
+        "type_info": "UuidArray",
+        "origin": {
+          "Table": {
+            "table": "api_tokens",
+            "name": "project_ids"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "expires_at: DateTime<Utc>",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "api_tokens",
+            "name": "expires_at"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "last_used_at: DateTime<Utc>",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "api_tokens",
+            "name": "last_used_at"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "revoked_at: DateTime<Utc>",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "api_tokens",
+            "name": "revoked_at"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "created_at: DateTime<Utc>",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "api_tokens",
+            "name": "created_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "e1175fa2612c46a54d4d51ca95cbb0cc22d0d2c0f75e2075fe2b4d603199edfd"
+}

@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select secret_ciphertext, key_id from user_totp where user_id = $1 and confirmed_at is null for update",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "secret_ciphertext",
+        "type_info": "Bytea",
+        "origin": {
+          "Table": {
+            "table": "user_totp",
+            "name": "secret_ciphertext"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "key_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "user_totp",
+            "name": "key_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "7a8618fd87c243de0e0bdfa3800727b08e6f613c7bb4c907efc3e7dded1371aa"
+}

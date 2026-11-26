@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select secret_ciphertext, key_id from user_totp where user_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "secret_ciphertext",
+        "type_info": "Bytea",
+        "origin": {
+          "Table": {
+            "table": "user_totp",
+            "name": "secret_ciphertext"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "key_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "user_totp",
+            "name": "key_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "84fa637e4f614a3d78c8f9022aabf2ba693390122becd8acff164bd9874af898"
+}

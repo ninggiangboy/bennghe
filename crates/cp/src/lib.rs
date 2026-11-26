@@ -1,0 +1,19 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+//! Bennghe control plane.
+pub mod api;
+pub mod app;
+pub mod audit;
+pub mod auth;
+pub mod certs;
+pub mod config;
+pub mod error;
+pub mod events;
+pub mod httpserver;
+pub mod jobs;
+pub mod netpolicy;
+pub mod rbac;
+pub mod secrets;
+pub mod server;
+pub mod store;
+pub mod util;
+pub mod webui;

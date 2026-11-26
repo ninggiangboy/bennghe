@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into settings (key, value) values ($1, $2) on conflict (key) do nothing",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Jsonb"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f9e91ac6fa0680e1951cd54141f447ee7539e07a95703ac34a1f5762eefa6775"
+}

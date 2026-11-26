@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update sessions set token_hash = $2, csrf_token = $3, stage = 'active', last_verified_at = now(),\n                expires_at = now() + interval '7 days'\n          where id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Bytea",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "68e27e679d5eed33ca07f39a7f6f386a6c1950a9e04ed7e33efd4ea426c58f4a"
+}

@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select canary_ciphertext from encryption_keys where key_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "canary_ciphertext",
+        "type_info": "Bytea",
+        "origin": {
+          "Table": {
+            "table": "encryption_keys",
+            "name": "canary_ciphertext"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "a5defe29305c5ddac76ed99e99c5a093b60520c4588e3fa9326e7ac087dcf353"
+}

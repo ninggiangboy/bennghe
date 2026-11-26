@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select (select count(*) from user_totp where user_id = $1) + (select count(*) from recovery_codes where user_id = $1) as \"n!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "n!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "775b4bd0362e67fc76262ec3f1bff4bd8c2fdcc7bfc53fb9776ac74ace6e6922"
+}
