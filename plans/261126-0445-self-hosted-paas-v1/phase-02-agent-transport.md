@@ -35,7 +35,7 @@ Agent Go cài bằng một lệnh, enroll bằng token dùng một lần, xác t
   - Watchdog trong binary: bản mới phải đạt trạng thái "đã kết nối + đã reconcile" trong 120 giây, nếu không thì tự thoát mã khác 0; systemd `WatchdogSec` + `ExecStartPre` khôi phục bản cũ.
   - Triển khai lần lượt từng node trong cụm, node đang là Swarm leader cập nhật sau cùng.
 - **Metrics:** gopsutil + tóm tắt docker stats mỗi 15 giây; control plane giữ raw 24 giờ (biểu đồ 24 giờ trên trang node), không rollup; cảnh báo dùng mẫu mới nhất. <!-- Red Team: O -->
-- **RBAC/audit:** mọi route mới (cụm, node, join token, enroll, xác nhận đổi IP, xác nhận nhận lại sau đổi epoch) có `x-permission` và gọi `audit.Record`; phát sự kiện `node.offline`, `node.disk_high` qua `events.Emit`. <!-- Red Team: C -->
+- **RBAC/audit:** route xoá cụm có `reauth: true` (phase 1) <!-- Red Team (Dokploy): 9 -->; mọi route mới (cụm, node, join token, enroll, xác nhận đổi IP, xác nhận nhận lại sau đổi epoch) có `x-permission` và gọi `audit.Record`; phát sự kiện `node.offline`, `node.disk_high` qua `events.Emit`. <!-- Red Team: C -->
 - **UI:** danh sách cụm, node (online/offline, version, tài nguyên), hộp thoại "Thêm node" hiện lệnh cài, trang node có biểu đồ 24 giờ, banner chờ xác nhận (đổi IP, đổi epoch).
 
 ## Files to Create / Modify

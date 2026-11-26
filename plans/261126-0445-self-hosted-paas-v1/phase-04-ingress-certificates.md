@@ -3,7 +3,7 @@ phase: 4
 title: "Ingress & Certificates"
 status: pending
 priority: P1
-effort: "2w"
+effort: "2.4w"
 dependencies: [3]
 ---
 
@@ -25,9 +25,10 @@ Mỗi cụm có Traefik làm ingress trên các node gắn nhãn ingress, **ch�
   - Gia hạn: River periodic job hằng ngày với `RunOnStart`, khi còn dưới 30 ngày hoặc khi ARI khuyến nghị; lỗi gia hạn gọi `events.Emit(cert.renewal_failed)` (contract từ phase 1, nên cảnh báo hoạt động ngay khi phase 8 thêm kênh). UI hiện cảnh báo từ 21 ngày. <!-- Red Team: C -->
   - Dev/CI dùng Pebble; kiểm thật dùng Let's Encrypt staging.
 - **Quyền sở hữu domain:** <!-- Red Team: F -->
-  - `domains(id, project_id, owner_type: app|stack_service, owner_id, hostname UNIQUE, tls_mode: http01|dns01|wildcard, cf_zone_id?, proxied, exposure: direct|tunnel)`; `hostname` là duy nhất trong cả bản cài.
+  - `domains(id, project_id, owner_type: app|stack_service, owner_id, hostname UNIQUE, tls_mode: http01|dns01|wildcard|custom (phase 11 thêm `preview_zone`), cf_zone_id?, proxied, exposure: direct|tunnel)`; `hostname` là duy nhất trong cả bản cài.
   - Admin cấu hình cho mỗi project danh sách zone/hậu tố được phép (ví dụ `*.team-a.example.com`). Domain ngoài danh sách bị từ chối. Domain của control plane luôn bị từ chối.
   - `tls_mode=wildcard` chỉ admin được dùng.
+- **Chứng chỉ tải lên (`tls_mode=custom`):** người có quyền quản lý domain tải lên cert PEM (kèm chain nếu có) + private key; dùng chính cho Cloudflare Origin CA (proxy Full strict) và cert của CA nội bộ doanh nghiệp. Khi tải lên, control plane kiểm: key khớp cert, cert còn hạn, SAN phủ đúng hostname của domain, **mọi** SAN (kể cả wildcard) đều là hostname thuộc cùng project hoặc nằm trong allowlist zone của project đó, không SAN nào trùng hostname của control plane <!-- Red Team (Dokploy): 8 -->, key RSA ≥ 2048 hoặc ECDSA P-256/P-384; **không** bắt chain phải được tin công khai (Origin CA không được trình duyệt tin). Key lưu mã hoá như secret khác, không bao giờ trả lại qua API. Cert tải lên không được tự gia hạn: job gia hạn hằng ngày chỉ kiểm hạn và phát `events.Emit(cert.expiring)` một lần khi còn 21 ngày và một lần khi còn 7 ngày, UI hiện cảnh báo; <!-- Red Team (Dokploy): 15 --> thay cert bằng cách tải bản mới, phân phối tới Traefik theo cùng đường file nguyên tử. <!-- Updated: Dokploy comparison 2026-11-26 -->
 - **Cloudflare DNS:** lưu API token mã hoá + account id (quyền Zone:Read, DNS:Edit; thêm Cloudflare Tunnel:Edit ở phase 10); kiểm quyền token khi liên kết. Khi gắn domain: nếu đã có record trùng tên **không** mang dấu hệ thống (trường comment `managed-by: bennghe`) thì báo xung đột, không ghi đè; admin có thể "nhận quản lý" record đó một cách tường minh (có audit). Tạo record A cho mỗi IP public của node ingress (IP đổi thì chờ admin xác nhận — phase 2). Gỡ domain chỉ xoá record mang dấu hệ thống. <!-- Red Team: F, K -->
 - **RBAC/audit:** route Cloudflare (liên kết tài khoản, zone), domain (gắn, gỡ, nhận quản lý record), cấu hình zone của project đều có `x-permission` và audit. <!-- Red Team: C -->
 - Control plane phải truy cập được từ internet để HTTP-01 hoạt động; tài liệu hoá.
@@ -42,7 +43,7 @@ Mỗi cụm có Traefik làm ingress trên các node gắn nhãn ingress, **ch�
 ## Tasks & Steps
 1. Spec Traefik (file provider only) trong `servicespec/infra.go`.
 2. Agent sinh file dynamic config; route challenge; redirect HTTP→HTTPS.
-3. Mở rộng cert manager: DNS-01, ARI, gia hạn, sự kiện.
+3. Mở rộng cert manager: DNS-01, ARI, gia hạn, sự kiện; cert tải lên (`custom`) có kiểm tra và cảnh báo hết hạn.
 4. Mô hình domain + allowlist zone theo project + chặn domain control plane.
 5. Cloudflare DNS: không ghi đè record ngoài hệ thống, nhận quản lý tường minh.
 6. UI.
@@ -51,6 +52,7 @@ Mỗi cụm có Traefik làm ingress trên các node gắn nhãn ingress, **ch�
 - [ ] Spec Traefik file-provider-only
 - [ ] Agent sinh dynamic config, ghi nguyên tử
 - [ ] DNS-01, ARI, gia hạn, sự kiện
+- [ ] Cert tải lên `tls_mode=custom` (kiểm key/SAN/hạn, cảnh báo hết hạn)
 - [ ] Sở hữu domain + allowlist zone
 - [ ] Cloudflare DNS an toàn
 - [ ] RBAC/audit cho route mới
@@ -62,6 +64,8 @@ Mỗi cụm có Traefik làm ingress trên các node gắn nhãn ingress, **ch�
 - Developer gắn domain ngoài allowlist của project, hoặc domain của control plane, hoặc hostname đã thuộc project khác: bị từ chối.
 - Record A có sẵn tạo tay trên Cloudflare không bị ghi đè hay xoá.
 - Ép gia hạn: cert mới có hiệu lực mà không restart Traefik.
+- Tải lên một cert Cloudflare Origin CA cho domain đang bật proxy: truy cập qua Cloudflare chế độ Full (strict) thành công; tải cert có SAN không khớp hostname hoặc key không khớp cert bị từ chối; API không bao giờ trả private key.
+- Developer của project A tải cert có thêm SAN là hostname của project B hoặc của control plane: bị từ chối.
 
 ## Verification
 - Unit test HTTP-01 provider, chọn tls_mode, allowlist; golden test file config Traefik.

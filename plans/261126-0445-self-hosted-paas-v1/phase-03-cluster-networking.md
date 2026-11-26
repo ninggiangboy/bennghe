@@ -73,4 +73,4 @@ Node trong một cụm (có thể khác nhà cung cấp) được nối bằng W
 - Hai node cùng sau NAT không nối được. Phản ứng: UI báo lỗi rõ; relay ngoài phạm vi v1.
 - `default-network-opts` không áp cho overlay như kỳ vọng. Tín hiệu: test tải 50 MB qua overlay của stack treo. Phản ứng: transform ở phase 9 đặt MTU tường minh cho mọi network khai báo và network `default` của stack.
 - Swarm: Mirantis gia hạn hỗ trợ tới khoảng 2030, Engine 29.10.1 ra 2026-11-24; rủi ro chiến lược là thương vụ IREN mua Mirantis (2026-08-04). Tín hiệu: thông báo ngừng hỗ trợ. Phản ứng: dừng và lập lại plan cho lớp runtime.
-- Mất quorum khi mất 2/3 manager. Phản ứng: runbook `--force-new-cluster` ở phase 11.
+- Mất quorum khi mất 2/3 manager. Phản ứng: runbook `--force-new-cluster` ở phase 12.
