@@ -43,7 +43,7 @@ Tích hợp native GitHub (GitHub App), GitLab và Gitea/Forgejo: kết nối t�
   - **Fallback luôn là deploy:** chưa có deployment `healthy` nào, API compare lỗi, base không phải tổ tiên của head (force-push) hoặc kết quả không đầy đủ thì deploy và ghi lý do. Đây là điểm khác có chủ đích với Dokploy, nơi thiếu danh sách file dẫn tới bỏ qua deploy.
   - Không file nào khớp: không tạo deployment, ghi bản ghi "bỏ qua (watch paths)" vào lịch sử của app, đặt commit status `success` với mô tả "bỏ qua: không đổi file được theo dõi" để branch protection không bị kẹt.
   - Bấm Deploy tay luôn bỏ qua watch paths.
-  - Compare API: GitHub `GET /repos/{owner}/{repo}/compare/{base}...{head}`, GitLab `GET /projects/:id/repository/compare`, Gitea `GET /repos/{owner}/{repo}/compare/{base}...{head}` [UNVERIFIED: phiên bản Gitea thấp nhất có endpoint compare; kiểm bằng container CI].
+  - Compare API: GitHub `GET /repos/{owner}/{repo}/compare/{base}...{head}`, GitLab `GET /projects/:id/repository/compare`, Gitea `GET /repos/{owner}/{repo}/compare/{base}...{head}` (có trong tài liệu API Gitea 1.22; phiên bản thấp nhất được hỗ trợ kiểm bằng container CI). GitHub compare trả tối đa 300 file cho cả phép so sánh (đã xác nhận trong tài liệu REST).
 - Webhook có owner là app hoặc stack (phase 9 dùng lại); đổi repo/branch hoặc xoá owner thì gỡ webhook cũ. <!-- Red Team: N -->
 - **Luồng OAuth và Manifest:** `state` sinh ngẫu nhiên, gắn với session của người bắt đầu luồng, kiểm khi callback; base URL (GitLab self-managed, Gitea, GHES) đi qua `netpolicy`; lỗi từ provider không trả nguyên nội dung response về UI. <!-- Red Team: M -->
 - **RBAC/audit:** kết nối provider là thao tác admin; chọn repo cho app theo quyền project; mọi route có `x-permission` + audit. <!-- Red Team: C -->

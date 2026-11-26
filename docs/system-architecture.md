@@ -38,6 +38,7 @@
 | Schedules travel inside desired state to every manager's local store | Store schedules as Swarm configs | One synchronisation mechanism instead of two, and no size limit or cleanup of config revisions. |
 | Projects are isolated: separate networks, admission policy for workloads, per-project registry pull rights, deploys by image digest | Projects as a UI grouping only | The owner chose real isolation. Cost: Traefik must join each project network, which restarts it briefly when a project gets its first domain in a cluster. |
 | Registry and builder per cluster | Require an external registry; accept only prebuilt images | "Push and it runs" works out of the box. Cost: one more component per cluster, and the registry is a single point for new deploys. |
+| Preview deployments are isolated from production at build and run time: a separate BuildKit instance and cache, their own network, deployment history, secrets and environment, and builds only when both the pull request author and the pusher have write access | Previews that inherit the app's environment and share its build cache (as Dokploy does) | Pull request code is unreviewed. Sharing secrets, cache or rollback history would let it reach production. Cost: a second BuildKit instance on the build node (started on demand) and separate preview configuration. |
 | The control plane serves its own TLS | A Caddy container in front | One certificate system instead of two. |
 | AGPL-3.0 | Apache-2.0, MIT | Keeps hosted forks open. Cost: some companies avoid AGPL software. |
 

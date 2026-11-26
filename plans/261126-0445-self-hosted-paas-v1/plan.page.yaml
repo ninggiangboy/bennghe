@@ -2,7 +2,7 @@
  "version": 1,
  "meta": {
   "title": "Bennghe — Self-hosted PaaS v1",
-  "description": "Plan triển khai PaaS mã nguồn mở tự cài quản lý nhiều cụm Docker Swarm trên WireGuard: 11 phase, ~36 tuần cho 1 người, đã qua research, red-team và validate.",
+  "description": "Plan triển khai PaaS mã nguồn mở tự cài quản lý nhiều cụm Docker Swarm trên WireGuard: 12 phase, ~47 tuần cho 1 người, đã qua research, red-team và validate (kể cả phần bổ sung lấy ý tưởng từ Dokploy).",
   "locale": "vi"
  },
  "theme": {
@@ -13,7 +13,7 @@
    "type": "hero",
    "eyebrow": "Plan · ak-plan --hard",
    "title": "Bennghe — Self-hosted PaaS v1",
-   "description": "Một control plane Go + React quản lý nhiều cụm Docker Swarm trên WireGuard: deploy app/compose, database, backup S3/R2, cron, team/RBAC, Cloudflare. AGPL-3.0."
+   "description": "Một control plane Go + React quản lý nhiều cụm Docker Swarm trên WireGuard: deploy app/compose, preview theo PR, database, backup S3/R2, cron, team/RBAC/2FA, Cloudflare. AGPL-3.0."
   },
   {
    "type": "key-value",
@@ -28,7 +28,7 @@
     },
     {
      "key": "Effort",
-     "value": "29,5 tuần + 20% buffer ≈ 36 tuần (1 người full-time)"
+     "value": "39,1 tuần + 20% buffer ≈ 47 tuần (1 người full-time)"
     },
     {
      "key": "Tạo ngày",
@@ -36,7 +36,7 @@
     },
     {
      "key": "Issue / branch",
-     "value": "chưa có (repo chưa khởi tạo git)"
+     "value": "chưa có issue; nhánh docs/plan-dokploy-additions"
     },
     {
      "key": "Plan index",
@@ -49,23 +49,23 @@
    "items": [
     {
      "label": "Phase",
-     "value": "11"
+     "value": "12"
     },
     {
      "label": "Tuần (có buffer)",
-     "value": "~36"
+     "value": "~47"
     },
     {
      "label": "Tiêu chí Done",
-     "value": "10"
+     "value": "13"
     },
     {
-     "label": "Nhóm red-team đã áp",
-     "value": "15"
+     "label": "Phát hiện red-team đã áp",
+     "value": "30"
     },
     {
      "label": "Câu hỏi validate",
-     "value": "7"
+     "value": "10"
     }
    ]
   },
@@ -77,58 +77,63 @@
      "type": "timeline",
      "items": [
       {
-       "when": "Tuần 0–4",
+       "when": "Tuần 0–5",
        "title": "Phase 1: Foundation",
        "text": "Có monorepo chạy được: control plane Go phục vụ SPA React qua TLS của chính nó, đăng nhập có bảo vệ màn hình setup, RBAC theo scope với cổng CI bắt mọi route khai báo quyền, audit cho cả thao tác thành công lẫn bị từ chối, contract phát sự kiện, job queue, lab test Incus, và CI xanh."
       },
       {
-       "when": "Tuần 4–7",
+       "when": "Tuần 5–9",
        "title": "Phase 2: Agent & Transport",
-       "text": "Agent Go cài bằng một lệnh, enroll bằng token dùng một lần, xác thực **hai chiều** với control plane qua WebSocket, chỉ áp desired state có chữ ký của control plane, có một reconciler duy nhất cho trạng thái cấp cụm, tự cập nhật an toàn (watchdog, chống hạ cấp, kênh chỉ-cập-nhật cho agent quá cũ), …"
+       "text": "Agent Go cài bằng một lệnh, enroll bằng token dùng một lần, xác thực **hai chiều** với control plane qua WebSocket, chỉ áp desired state có chữ ký của control plane, có một reconciler duy nhất cho trạng thái cấp cụm, tự cập nhật an toàn (watchdog, chống hạ cấp, kênh chỉ-cập-nhật cho agent quá cũ), chịu được control plane offline lâu và control plane được restore từ backup."
       },
       {
-       "when": "Tuần 7–10",
+       "when": "Tuần 9–12",
        "title": "Phase 3: Cluster Networking",
-       "text": "Node trong một cụm (có thể khác nhà cung cấp) được nối bằng WireGuard full mesh, chạy Docker Swarm trên IP WireGuard, **sống sót qua reboot khi control plane offline**, chỉ nhận workload sau khi được chuẩn bị xong, có firewall đúng, và được thêm/gỡ an toàn (kể cả node chạy database hay manager). Đâ…"
+       "text": "Node trong một cụm (có thể khác nhà cung cấp) được nối bằng WireGuard full mesh, chạy Docker Swarm trên IP WireGuard, **sống sót qua reboot khi control plane offline**, chỉ nhận workload sau khi được chuẩn bị xong, có firewall đúng, và được thêm/gỡ an toàn (kể cả node chạy database hay manager). Đây là mốc **alpha1**."
       },
       {
-       "when": "Tuần 10–13",
+       "when": "Tuần 12–15",
        "title": "Phase 4: Ingress & Certificates",
-       "text": "Mỗi cụm có Traefik làm ingress trên các node gắn nhãn ingress, **chỉ đọc cấu hình do agent sinh ra** (không chạm Docker API); control plane cấp và gia hạn chứng chỉ tập trung (HTTP-01 và DNS-01 Cloudflare, có wildcard); domain có chủ sở hữu rõ ràng, không thể bị project khác chiếm; record DNS Cloud…"
+       "text": "Mỗi cụm có Traefik làm ingress trên các node gắn nhãn ingress, **chỉ đọc cấu hình do agent sinh ra** (không chạm Docker API); control plane cấp và gia hạn chứng chỉ tập trung (HTTP-01 và DNS-01 Cloudflare, có wildcard); domain có chủ sở hữu rõ ràng, không thể bị project khác chiếm; record DNS Cloudflare được tạo tự động mà không bao giờ ghi đè record ngoài hệ thống."
       },
       {
-       "when": "Tuần 13–17",
+       "when": "Tuần 15–23",
        "title": "Phase 5: Build & Deploy",
-       "text": "Deploy app từ image, Dockerfile hoặc mã nguồn (Railpack) thành Swarm service có replica, HTTPS, env/secret, rolling update chờ healthcheck, tự rollback, rollback tay trả lại **toàn bộ cấu hình** của bản trước; các deployment của cùng một app chạy tuần tự; mọi workload đi qua chính sách kiểm duyệt v…"
+       "text": "Deploy app từ image, Dockerfile hoặc mã nguồn (Railpack) thành Swarm service có replica, HTTPS, env/secret, rolling update chờ healthcheck, tự rollback, rollback tay trả lại **toàn bộ cấu hình** của bản trước; các deployment của cùng một app chạy tuần tự; mọi workload đi qua chính sách kiểm duyệt và được cách ly theo project. Đây là mốc **alpha2**. Ở phase này nguồn Git là URL `https://` công khai; tích hợp provider ở phase 6."
       },
       {
-       "when": "Tuần 17–21",
+       "when": "Tuần 23–27",
        "title": "Phase 6: Git Providers",
        "text": "Tích hợp native GitHub (GitHub App), GitLab và Gitea/Forgejo: kết nối tài khoản, chọn repo từ danh sách, tự tạo webhook, push lên branch thì tự deploy, và cập nhật commit status theo kết quả deployment."
       },
       {
-       "when": "Tuần 21–25",
+       "when": "Tuần 27–31",
        "title": "Phase 7: Databases & Backups",
        "text": "Tạo Postgres, MySQL, MongoDB, Redis bằng một thao tác trong network riêng; backup lên S3-compatible (AWS, R2, B2, MinIO) có mã hoá, retention, credential đặt trong cụm an toàn để backup chạy được khi control plane offline; restore vào database mới. Lịch backup chạy qua scheduler ở phase 8."
       },
       {
-       "when": "Tuần 25–27",
+       "when": "Tuần 31–34",
        "title": "Phase 8: Scheduler, Cron & Notifications",
        "text": "Cron job và lịch backup chạy đúng giờ khi control plane offline, chịu được đổi leader và agent leader chết, không chạy trùng; có lịch sử, log và thông báo qua Telegram, Slack, email, webhook. Đây là mốc **alpha3**."
       },
       {
-       "when": "Tuần 27–29",
+       "when": "Tuần 34–37",
        "title": "Phase 9: Compose & Templates",
        "text": "Deploy stack từ docker-compose (dán vào hoặc lấy từ Git) lên Swarm sau một bước biến đổi **dùng chung quy tắc của `servicespec`** (kiểm duyệt, route, secret, network, MTU, ghim volume), có cập nhật tuần tự và rollback theo revision; thư viện template cài bằng một thao tác."
       },
       {
-       "when": "Tuần 29–32",
+       "when": "Tuần 37–39",
        "title": "Phase 10: Team UI & Cloudflare Tunnel",
        "text": "Quản lý team (mời, phân vai trò theo cụm/project, gỡ người), xem audit log; và expose app qua Cloudflare Tunnel cho cụm không mở 80/443."
       },
       {
-       "when": "Tuần 32–35",
-       "title": "Phase 11: E2E & Release",
+       "when": "Tuần 39–43",
+       "title": "Phase 11: Preview Deployments",
+       "text": "Mỗi pull request (GitHub, GHES, GitLab merge request, Gitea/Forgejo) của một app có bật preview được build và chạy thành một bản preview có URL HTTPS riêng, chỉ khi cả tác giả PR lẫn người đẩy commit đều có quyền ghi vào repo; bản preview không bao giờ nhận secret, network, cache build hay lịch sử deployment của production, có giới hạn số lượng, và bị gỡ khi PR đóng hoặc merge."
+      },
+      {
+       "when": "Tuần 43–47",
+       "title": "Phase 12: E2E & Release",
        "text": "Bộ test end-to-end chứng minh mọi tiêu chí Done của plan, pipeline phát hành có ký số, tài liệu cài đặt/nâng cấp/khôi phục, và bản v1.0."
       }
      ]
@@ -137,7 +142,7 @@
      "type": "callout",
      "tone": "info",
      "title": "Mốc alpha",
-     "text": "alpha1 sau phase 3 (~tuần 10): cụm chạy được. alpha2 sau phase 5 (~tuần 17): deploy app. alpha3 sau phase 8 (~tuần 27): database, backup, cron. v1.0 sau phase 11 (~tuần 36)."
+     "text": "alpha1 sau phase 3 (~tuần 12): cụm chạy được. alpha2 sau phase 5 (~tuần 23): deploy app. alpha3 sau phase 8 (~tuần 34): database, backup, cron. Preview deployment ở phase 11. v1.0 sau phase 12 (~tuần 47)."
     }
    ]
   },
@@ -308,6 +313,16 @@
         "kind": "failure-recoverable"
        },
        {
+        "id": "cancelling",
+        "label": "cancelling (giữ slot tới khi agent xác nhận)",
+        "kind": "waiting"
+       },
+       {
+        "id": "cancelled",
+        "label": "cancelled",
+        "kind": "terminal-cancelled"
+       },
+       {
         "id": "superseded",
         "label": "superseded",
         "kind": "terminal-cancelled"
@@ -356,10 +371,32 @@
         "to": "rolledback",
         "event": "healthcheck lỗi",
         "kind": "fail"
+       },
+       {
+        "from": "queued",
+        "to": "cancelling",
+        "event": "người dùng huỷ",
+        "kind": "cancel"
+       },
+       {
+        "from": "building",
+        "to": "cancelling",
+        "event": "người dùng huỷ",
+        "kind": "cancel"
+       },
+       {
+        "from": "cancelling",
+        "to": "cancelled",
+        "event": "agent xác nhận / hết timeout"
+       },
+       {
+        "from": "queued",
+        "to": "rolling",
+        "event": "không cần build (rollback, image)"
        }
       ]
      },
-     "caption": "Mỗi app chỉ một rollout tại một thời điểm; Swarm rollback đưa desired state về snapshot thành công trước."
+     "caption": "Mỗi app (và mỗi preview) chỉ một rollout tại một thời điểm; bộ điều phối theo cụm cấp slot build; huỷ giữ slot tới khi agent xác nhận; Swarm rollback đưa desired state về snapshot production thành công trước."
     },
     {
      "type": "diagram-panel",
@@ -493,6 +530,9 @@
       },
       {
        "text": "Project là ranh giới cách ly bảo mật thật trong một cụm (chốt ở red-team 2026-11-26)."
+      },
+      {
+       "text": "Bổ sung từ so sánh Dokploy (người dùng chọn 2026-11-26, [báo cáo](../reports/xia-261126-1619-dokploy-comparison.md)): 2FA TOTP, xác thực lại 5 phút cho thao tác nhạy cảm, API token cho CI (phase 1); cert tải lên `tls_mode=custom` (phase 4); huỷ deployment, stream log build, giới hạn build song song, dọn Docker trên node, biến `${{project.KEY}}` (phase 5); watch paths (phase 6); backup volume có dừng service (phase 7); cảnh báo CPU/RAM (phase 8); generator base64/uuid/jwt (phase 9); preview deployment theo PR thành phase 11 mới, E2E & Release chuyển thành phase 12. Chỉ lấy ý tưởng; không chép mã, không dùng phần `/proprietary` của Dokploy."
       }
      ]
     }
@@ -506,7 +546,7 @@
      "type": "accordion",
      "items": [
       {
-       "title": "Phase 1 · Foundation · 3w",
+       "title": "Phase 1 · Foundation · 4.5w",
        "blocks": [
         {
          "type": "key-value",
@@ -521,7 +561,7 @@
           },
           {
            "key": "Effort",
-           "value": "3w"
+           "value": "4.5w"
           },
           {
            "key": "Phụ thuộc",
@@ -561,7 +601,16 @@
            "text": "Sự kiện: `events.Emit(ctx, tx, Event)` chèn một River job trong cùng transaction với thao tác. Mọi phase sau phát sự kiện qua hàm này; phase 8 chỉ thêm phần tiêu thụ (quy tắc + kênh thông báo). Không dựng bus riêng."
           },
           {
-           "text": "Auth: user local (argon2id), session cookie HttpOnly + SameSite=Lax, CSRF token, rate limit đăng nhập. Setup token: install script sinh token dùng một lần, in ra terminal, lưu dạng hash; `/setup` đòi token này và vô hiệu sau khi tạo owner."
+           "text": "Auth: user local (argon2id), session cookie HttpOnly + SameSite=Lax, tên có tiền tố `__Host-` (preview chạy mã chưa review có thể cùng site), CSRF token, rate limit đăng nhập. Setup token: install script sinh token dùng một lần, in ra terminal, lưu dạng hash; `/setup` đòi token này và vô hiệu sau khi tạo owner."
+          },
+          {
+           "text": "2FA TOTP (RFC 6238): bật trong trang tài khoản bằng mã QR; secret TOTP mã hoá bằng master key (AAD = bảng + id user); 10 mã khôi phục dùng một lần lưu hash argon2id; từ chối dùng lại cùng bước thời gian đã dùng; rate limit chung với đăng nhập. Đăng nhập có 2FA là hai bước: mật khẩu đúng chỉ tạo phiên tạm (5 phút) để nhập mã. Owner có thể bật cài đặt \"bắt buộc 2FA cho owner/admin\": user thuộc vai trò đó chưa có 2FA bị đưa vào màn hình đăng ký 2FA trước khi làm việc khác. Chỉ owner reset được 2FA của người khác, cần xác thực lại và có audit. Lối thoát khi owner cuối cùng mất cả thiết bị lẫn mã khôi phục: lệnh `controlplane admin reset-2fa --user <email>` chạy trên host (cần shell của host và file master key), có audit; tài liệu ở phase 12."
+          },
+          {
+           "text": "Xác thực lại cho thao tác nhạy cảm: `x-permission` có thêm trường `reauth: true`. Middleware chỉ cho qua khi phiên có `last_verified_at` trong 5 phút gần nhất; nếu không thì trả 403 mã `REAUTH_REQUIRED` (có `RecordDenied`) và UI hỏi lại mật khẩu, hoặc mã TOTP nếu user đã bật 2FA. Endpoint xác thực lại dùng chung rate limit đăng nhập. Danh sách route `reauth` là dữ liệu trong `internal/cp/rbac/policy.go`; `TestAllRoutes` đọc danh sách đó, và phase nào tạo route nhạy cảm thì đánh dấu `reauth: true` ngay trong phase đó (phase 2, 5, 7, 9). Danh sách ban đầu: tải recovery kit, xem giá trị secret, bật `privileged`, mở public database, xoá cụm/project, tạo API token, tắt hoặc reset 2FA. Request dùng API token không bao giờ thoả `reauth`, nên các thao tác này chỉ làm được trên UI. `TestAllRoutes` kiểm rằng mọi route trong danh sách có `reauth: true`."
+          },
+          {
+           "text": "API token cho CI: token cá nhân gắn với user, định dạng `bnp_<ngẫu nhiên 32 byte base62>` (tiền tố giúp secret scanning nhận diện), chỉ hiện một lần lúc tạo, lưu SHA-256. Mỗi token có danh sách project (tập con của membership của user), vai trò không cao hơn vai trò của user trong project đó, hạn dùng bắt buộc (tối đa 1 năm), `last_used_at`, thu hồi được. Gửi qua `Authorization: Bearer`; đi qua cùng middleware RBAC và `x-permission`; audit ghi cả user lẫn id token. Vai trò hiệu lực được tính ở mỗi request = thấp hơn giữa vai trò lưu trong token và vai trò hiện tại của user trong project; token chỉ dùng được cho route scope `project` (route scope `cluster`/`global` luôn 403, `TestAllRoutes` có cột cho principal token); token của user thuộc diện bắt buộc 2FA mà chưa bật 2FA bị từ chối. Gỡ user khỏi project hoặc khỏi bản cài (phase 10) thu hồi ngay token liên quan. Không làm URL deploy chứa token như Dokploy."
           },
           {
            "text": "Mã hoá secret at-rest: AES-256-GCM, AAD = tên bảng + id bản ghi, master key 32 byte đọc từ file 0600, cột `key_id` cho việc xoay khoá."
@@ -593,7 +642,7 @@
          "type": "code",
          "language": "text",
          "title": "File tạo / sửa",
-         "text": "go.mod, Makefile, .golangci.yml, sqlc.yaml, buf.yaml\ncmd/controlplane/main.go, cmd/agent/main.go, cmd/healthcheck/main.go, cmd/envexec/main.go\ninternal/cp/{config,httpserver,auth,rbac,audit,events,secrets,store,jobs,certs,netpolicy,webui}/\nmigrations/<timestamp>_init.sql (users, sessions, setup_tokens, projects, memberships, audit_events, settings, encryption_keys)\napi/openapi.yaml, web/\ndeploy/controlplane/docker-compose.yml, deploy/install-controlplane.sh\ntest/lab/incus-up.sh, test/lab/incus-down.sh\n.github/workflows/ci.yml, LICENSE, README.md, docs/development.md"
+         "text": "go.mod, Makefile, .golangci.yml, sqlc.yaml, buf.yaml\ncmd/controlplane/main.go, cmd/agent/main.go, cmd/healthcheck/main.go, cmd/envexec/main.go\ninternal/cp/{config,httpserver,auth,rbac,audit,events,secrets,store,jobs,certs,netpolicy,webui}/\nmigrations/<timestamp>_init.sql (users, sessions, setup_tokens, projects, memberships, audit_events, settings, encryption_keys, user_totp, recovery_codes, api_tokens)\napi/openapi.yaml, web/\ndeploy/controlplane/docker-compose.yml, deploy/install-controlplane.sh\ntest/lab/incus-up.sh, test/lab/incus-down.sh\n.github/workflows/ci.yml, LICENSE, docs/development.md\nModify: README.md (add build and run instructions), docs/system-architecture.md (link boundaries to real packages)"
         },
         {
          "type": "list",
@@ -609,7 +658,7 @@
            "text": "`secrets`, định danh control plane, setup token."
           },
           {
-           "text": "Auth (setup có token, login, session, CSRF, rate limit)."
+           "text": "Auth (setup có token, login, session, CSRF, rate limit); 2FA TOTP + mã khôi phục + cài đặt bắt buộc; xác thực lại (`reauth`); API token."
           },
           {
            "text": "RBAC: `x-permission`, policy, middleware, `TestAllRoutes` làm cổng CI."
@@ -652,7 +701,19 @@
            "done": false
           },
           {
-           "text": "RBAC + x-permission + cổng TestAllRoutes",
+           "text": "2FA TOTP + mã khôi phục + bắt buộc cho owner/admin",
+           "done": false
+          },
+          {
+           "text": "Xác thực lại 5 phút cho route `reauth: true`",
+           "done": false
+          },
+          {
+           "text": "API token cho CI (scope project, hạn dùng, thu hồi)",
+           "done": false
+          },
+          {
+           "text": "RBAC + `x-permission` + cổng `TestAllRoutes`",
            "done": false
           },
           {
@@ -660,7 +721,7 @@
            "done": false
           },
           {
-           "text": "events.Emit",
+           "text": "`events.Emit`",
            "done": false
           },
           {
@@ -668,7 +729,7 @@
            "done": false
           },
           {
-           "text": "netpolicy",
+           "text": "`netpolicy`",
            "done": false
           },
           {
@@ -699,6 +760,22 @@
           },
           {
            "text": "`test/lab/incus-up.sh` dựng 3 VM trong dưới 10 phút.",
+           "badge": "gate"
+          },
+          {
+           "text": "User có 2FA: đăng nhập chỉ bằng mật khẩu không vào được; dùng lại mã TOTP vừa dùng bị từ chối; mỗi mã khôi phục chỉ dùng được một lần.",
+           "badge": "gate"
+          },
+          {
+           "text": "Tạo API token khi phiên đã xác thực hơn 5 phút trước trả `REAUTH_REQUIRED`; sau khi nhập lại mật khẩu thì tạo được; mọi route `reauth: true` gọi bằng API token đều bị 403. (Kiểm recovery kit nằm ở phase 7.)",
+           "badge": "gate"
+          },
+          {
+           "text": "API token scope project A gọi API của project B nhận 403; token hết hạn hoặc bị thu hồi nhận 401; `curl` dùng token gọi deploy được ghi audit với id token.",
+           "badge": "gate"
+          },
+          {
+           "text": "Token tạo khi user là admin của project A, sau đó user bị hạ xuống viewer: token bị 403 khi deploy. Token gọi route scope `cluster` bị 403.",
            "badge": "gate"
           }
          ]
@@ -797,7 +874,7 @@
            "text": "Metrics: gopsutil + tóm tắt docker stats mỗi 15 giây; control plane giữ raw 24 giờ (biểu đồ 24 giờ trên trang node), không rollup; cảnh báo dùng mẫu mới nhất."
           },
           {
-           "text": "RBAC/audit: mọi route mới (cụm, node, join token, enroll, xác nhận đổi IP, xác nhận nhận lại sau đổi epoch) có `x-permission` và gọi `audit.Record`; phát sự kiện `node.offline`, `node.disk_high` qua `events.Emit`."
+           "text": "RBAC/audit: route xoá cụm có `reauth: true` (phase 1) ; mọi route mới (cụm, node, join token, enroll, xác nhận đổi IP, xác nhận nhận lại sau đổi epoch) có `x-permission` và gọi `audit.Record`; phát sự kiện `node.offline`, `node.disk_high` qua `events.Emit`."
           },
           {
            "text": "UI: danh sách cụm, node (online/offline, version, tài nguyên), hộp thoại \"Thêm node\" hiện lệnh cài, trang node có biểu đồ 24 giờ, banner chờ xác nhận (đổi IP, đổi epoch)."
@@ -1078,7 +1155,7 @@
          "title": "Todo",
          "items": [
           {
-           "text": "Khoá WG + peer cục bộ, bn-wg-up.service, thứ tự với docker",
+           "text": "Khoá WG + peer cục bộ, `bn-wg-up.service`, thứ tự với docker",
            "done": false
           },
           {
@@ -1098,7 +1175,7 @@
            "done": false
           },
           {
-           "text": "Cổng bn.ready",
+           "text": "Cổng `bn.ready`",
            "done": false
           },
           {
@@ -1172,14 +1249,14 @@
            "text": "Swarm: Mirantis gia hạn hỗ trợ tới khoảng 2030, Engine 29.10.1 ra 2026-11-24; rủi ro chiến lược là thương vụ IREN mua Mirantis (2026-08-04). Tín hiệu: thông báo ngừng hỗ trợ. Phản ứng: dừng và lập lại plan cho lớp runtime."
           },
           {
-           "text": "Mất quorum khi mất 2/3 manager. Phản ứng: runbook `--force-new-cluster` ở phase 11."
+           "text": "Mất quorum khi mất 2/3 manager. Phản ứng: runbook `--force-new-cluster` ở phase 12."
           }
          ]
         }
        ]
       },
       {
-       "title": "Phase 4 · Ingress & Certificates · 2w",
+       "title": "Phase 4 · Ingress & Certificates · 2.4w",
        "blocks": [
         {
          "type": "key-value",
@@ -1194,7 +1271,7 @@
           },
           {
            "key": "Effort",
-           "value": "2w"
+           "value": "2.4w"
           },
           {
            "key": "Phụ thuộc",
@@ -1222,7 +1299,10 @@
            "text": "Cert manager mở rộng `internal/cp/certs` từ phase 1, dùng `github.com/go-acme/lego/v5` (`Present(ctx, ...)`): Một ACME account mỗi bản cài, khoá lưu mã hoá; bật ARI để gia hạn không tính vào rate limit (50 cert/tên miền đăng ký/tuần, 5 cert trùng/tuần). HTTP-01: token lưu trong Postgres; control plane phục vụ `/.well-known/acme-challenge/{token}`; route ưu tiên cao nhất trong file config của Traefik trỏ path này về URL public của control plane. Route này do platform sinh, người dùng không ghi đè được. DNS-01 qua Cloudflare khi zone đã liên kết; wildcard chỉ qua DNS-01. Gia hạn: River periodic job hằng ngày với `RunOnStart`, khi còn dưới 30 ngày hoặc khi ARI khuyến nghị; lỗi gia hạn gọi `events.Emit(cert.renewal_failed)` (contract từ phase 1, nên cảnh báo hoạt động ngay khi phase 8 thêm kênh). UI hiện cảnh báo từ 21 ngày. Dev/CI dùng Pebble; kiểm thật dùng Let's Encrypt staging."
           },
           {
-           "text": "Quyền sở hữu domain: `domains(id, project_id, owner_type: app|stack_service, owner_id, hostname UNIQUE, tls_mode: http01|dns01|wildcard, cf_zone_id?, proxied, exposure: direct|tunnel)`; `hostname` là duy nhất trong cả bản cài. Admin cấu hình cho mỗi project danh sách zone/hậu tố được phép (ví dụ `*.team-a.example.com`). Domain ngoài danh sách bị từ chối. Domain của control plane luôn bị từ chối. `tls_mode=wildcard` chỉ admin được dùng."
+           "text": "Quyền sở hữu domain: `domains(id, project_id, owner_type: app|stack_service, owner_id, hostname UNIQUE, tls_mode: http01|dns01|wildcard|custom (phase 11 thêm `preview_zone`), cf_zone_id?, proxied, exposure: direct|tunnel)`; `hostname` là duy nhất trong cả bản cài. Admin cấu hình cho mỗi project danh sách zone/hậu tố được phép (ví dụ `*.team-a.example.com`). Domain ngoài danh sách bị từ chối. Domain của control plane luôn bị từ chối. `tls_mode=wildcard` chỉ admin được dùng."
+          },
+          {
+           "text": "Chứng chỉ tải lên (`tls_mode=custom`): người có quyền quản lý domain tải lên cert PEM (kèm chain nếu có) + private key; dùng chính cho Cloudflare Origin CA (proxy Full strict) và cert của CA nội bộ doanh nghiệp. Khi tải lên, control plane kiểm: key khớp cert, cert còn hạn, SAN phủ đúng hostname của domain, mọi SAN (kể cả wildcard) đều là hostname thuộc cùng project hoặc nằm trong allowlist zone của project đó, không SAN nào trùng hostname của control plane , key RSA ≥ 2048 hoặc ECDSA P-256/P-384; không bắt chain phải được tin công khai (Origin CA không được trình duyệt tin). Key lưu mã hoá như secret khác, không bao giờ trả lại qua API. Cert tải lên không được tự gia hạn: job gia hạn hằng ngày chỉ kiểm hạn và phát `events.Emit(cert.expiring)` một lần khi còn 21 ngày và một lần khi còn 7 ngày, UI hiện cảnh báo; thay cert bằng cách tải bản mới, phân phối tới Traefik theo cùng đường file nguyên tử."
           },
           {
            "text": "Cloudflare DNS: lưu API token mã hoá + account id (quyền Zone:Read, DNS:Edit; thêm Cloudflare Tunnel:Edit ở phase 10); kiểm quyền token khi liên kết. Khi gắn domain: nếu đã có record trùng tên không mang dấu hệ thống (trường comment `managed-by: bennghe`) thì báo xung đột, không ghi đè; admin có thể \"nhận quản lý\" record đó một cách tường minh (có audit). Tạo record A cho mỗi IP public của node ingress (IP đổi thì chờ admin xác nhận — phase 2). Gỡ domain chỉ xoá record mang dấu hệ thống."
@@ -1252,7 +1332,7 @@
            "text": "Agent sinh file dynamic config; route challenge; redirect HTTP→HTTPS."
           },
           {
-           "text": "Mở rộng cert manager: DNS-01, ARI, gia hạn, sự kiện."
+           "text": "Mở rộng cert manager: DNS-01, ARI, gia hạn, sự kiện; cert tải lên (`custom`) có kiểm tra và cảnh báo hết hạn."
           },
           {
            "text": "Mô hình domain + allowlist zone theo project + chặn domain control plane."
@@ -1279,6 +1359,10 @@
           },
           {
            "text": "DNS-01, ARI, gia hạn, sự kiện",
+           "done": false
+          },
+          {
+           "text": "Cert tải lên `tls_mode=custom` (kiểm key/SAN/hạn, cảnh báo hết hạn)",
            "done": false
           },
           {
@@ -1322,6 +1406,14 @@
           {
            "text": "Ép gia hạn: cert mới có hiệu lực mà không restart Traefik.",
            "badge": "gate"
+          },
+          {
+           "text": "Tải lên một cert Cloudflare Origin CA cho domain đang bật proxy: truy cập qua Cloudflare chế độ Full (strict) thành công; tải cert có SAN không khớp hostname hoặc key không khớp cert bị từ chối; API không bao giờ trả private key.",
+           "badge": "gate"
+          },
+          {
+           "text": "Developer của project A tải cert có thêm SAN là hostname của project B hoặc của control plane: bị từ chối.",
+           "badge": "gate"
           }
          ]
         },
@@ -1352,7 +1444,7 @@
        ]
       },
       {
-       "title": "Phase 5 · Build & Deploy · 4w",
+       "title": "Phase 5 · Build & Deploy · 6.5w",
        "blocks": [
         {
          "type": "key-value",
@@ -1367,7 +1459,7 @@
           },
           {
            "key": "Effort",
-           "value": "4w"
+           "value": "6.5w"
           },
           {
            "key": "Phụ thuộc",
@@ -1392,7 +1484,7 @@
            "text": "`servicespec` là chủ sở hữu duy nhất của: network, route (qua `routing` phase 4), mount healthcheck/envexec, `update_config`/`rollback_config`, đặt tên secret, constraint `bn.ready`, chính sách kiểm duyệt. App, database (phase 7), job (phase 7–8), stack (phase 9) và dịch vụ hạ tầng (Traefik, cloudflared) đều sinh spec qua đây."
           },
           {
-           "text": "Chính sách kiểm duyệt workload (`servicespec/admission.go`): mặc định từ chối bind mount (trừ binary của platform), volume ngoài project, `privileged`, `cap_add`, devices, host network/PID, placement ngoài nhãn được phép của project, label `traefik.*` do người dùng tự viết. Cờ `privileged` cho từng app/stack chỉ admin bật, có audit."
+           "text": "Chính sách kiểm duyệt workload (`servicespec/admission.go`; route bật `privileged` và xem giá trị secret có `reauth: true` theo phase 1 ): mặc định từ chối bind mount (trừ binary của platform), volume ngoài project, `privileged`, `cap_add`, devices, host network/PID, placement ngoài nhãn được phép của project, label `traefik.*` do người dùng tự viết. Cờ `privileged` cho từng app/stack chỉ admin bật, có audit."
           },
           {
            "text": "Cách ly project: mỗi project trong mỗi cụm có overlay riêng `bn-proj-<id>` (không attachable); Traefik được gắn vào các network này (phase 4)."
@@ -1410,10 +1502,10 @@
            "text": "Deployment tuần tự theo app: Tại mỗi thời điểm chỉ một deployment của một app ở `rolling_out` (River unique job theo `app_id` + advisory lock Postgres). Deployment mới vào hàng đợi huỷ các deployment cũ hơn chưa tới `rolling_out` (trạng thái `superseded`). Không gửi cập nhật khi `UpdateStatus.State` của service đang `updating`. Không tự deploy commit cũ hơn commit đang chạy trên cùng branch, trừ khi người dùng bấm tay."
           },
           {
-           "text": "Snapshot deployment: mỗi deployment lưu toàn bộ đầu vào đã render (digest image, env tham chiếu, tên + hash secret, resources, healthcheck, route). Rollback tay = tạo deployment mới áp lại snapshot của deployment thành công trước đó. Secret có hậu tố hash được giữ nếu còn được tham chiếu bởi 5 deployment thành công gần nhất; cũ hơn thì dọn."
+           "text": "Snapshot deployment: mỗi deployment lưu toàn bộ đầu vào đã render (digest image, `source_sha`, giá trị đã giải của env không bí mật kể cả biến lấy từ `${{project.KEY}}`, tên + hash Swarm secret cho giá trị bí mật, resources, healthcheck, route). Rollback áp lại đúng các giá trị này, không giải lại tham chiếu. Rollback tay = tạo deployment mới áp lại snapshot của deployment thành công trước đó. Secret có hậu tố hash được giữ nếu còn được tham chiếu bởi 5 deployment thành công gần nhất; cũ hơn thì dọn."
           },
           {
-           "text": "State machine: `queued → cloning → building → pushing → rolling_out → healthy | failed | rolled_back | superseded`; mỗi bước có timeout."
+           "text": "State machine: `queued → cloning → building → pushing → rolling_out → healthy | failed | rolled_back | superseded | cancelled`; mỗi bước có timeout."
           },
           {
            "text": "Rolling update: `update_config{order: start-first, failure_action: rollback, monitor: 30s, parallelism: 1, delay: 10s}`, `rollback_config.order=start-first` tường minh, `stop_grace_period: 30s`. Swarm chờ HEALTHCHECK đạt mới coi task mới là running (research-01 mục 4)."
@@ -1431,13 +1523,34 @@
            "text": "Image từ registry ngoài: `registry_credentials` mã hoá."
           },
           {
+           "text": "Huỷ deployment: thêm trạng thái `cancelling` và trạng thái kết thúc `cancelled`. Người có quyền deploy app huỷ được deployment ở `queued`, `cloning` hoặc `building`; khi upload manifest đã bắt đầu (`pushing`) thì không huỷ được nữa. Deployment ở `cancelling` giữ slot build cho tới khi agent xác nhận đã huỷ context clone/solve BuildKit và xoá thư mục tạm, hoặc tới khi hết timeout của bước; sau đó mới thành `cancelled`. Mọi chuyển trạng thái là `UPDATE … WHERE state = <trạng thái mong đợi>`, nên kết quả đến trễ từ outbox không thể đưa deployment đã huỷ sang `rolling_out`. Huỷ có audit và phát `deploy.cancelled`."
+          },
+          {
+           "text": "Stream log build trực tiếp: agent ghi toàn bộ log build ra file tạm trên đĩa (tối đa 5 MB, đã qua bộ lọc chuỗi giống token) và gửi file này kèm kết quả job (lớp không bao giờ bị bỏ của outbox phase 2) khi deployment kết thúc; đây là bản lưu chính thức, nén vào Postgres. Song song, agent đẩy log theo từng khối qua kênh WebSocket (best-effort); control plane ghi các khối vào bảng `build_log_chunks(deployment_id, seq, data)` và phát lại tới người đang xem (cùng action đọc nhạy cảm với log), nên mở trang giữa chừng hoặc sau khi control plane restart vẫn thấy phần đã có. Khi có bản chính thức thì xoá các khối."
+          },
+          {
+           "text": "Bộ điều phối build theo cụm và giới hạn song song: `clusters.max_concurrent_builds` (mặc định 1). Một River job duy nhất theo cụm chọn deployment `queued` kế tiếp bằng `ORDER BY` ưu tiên (production trước preview của phase 11, preview chờ quá 30 phút được xếp ngang) rồi `created_at`, `FOR UPDATE SKIP LOCKED`, chỉ khi số deployment ở `cloning|building|pushing|cancelling` nhỏ hơn giới hạn và registry không đang GC. Job này được enqueue lại ở mọi chuyển trạng thái kết thúc hoặc giải phóng slot, khi GC xong, và chạy định kỳ mỗi phút để phòng sót. UI hiện vị trí trong hàng theo cùng thứ tự. Build service của stack (phase 9) cũng đi qua bộ điều phối này."
+          },
+          {
+           "text": "Deployment không cần build không chiếm slot: rollback tay, app `source_type=image` và redeploy cùng digest đi thẳng từ `queued` tới `rolling_out` (vẫn tuần tự theo app)."
+          },
+          {
+           "text": "Timeout mỗi bước: `cloning` 10 phút, `building` 30 phút, `pushing` 10 phút (cấu hình theo app); mất session agent của build node trong một bước quá 2 phút thì deployment thành `failed` và trả slot."
+          },
+          {
+           "text": "Dọn Docker trên từng node: agent chạy dọn theo bộ hẹn giờ cục bộ hằng ngày lúc 03:30 theo timezone của cụm (chạy được khi control plane offline), và chạy ngay khi disk > 90% nhưng không quá một lần mỗi 30 phút: xoá container đã dừng không thuộc task Swarm nào đang được theo dõi và không phải dấu chống chạy trùng của job (quy tắc giữ lại ở phase 7); xoá image không được container nào dùng, trừ danh sách giữ lại gửi kèm desired state: digest hiện tại của mọi app/stack/preview trong cụm, image trong `PreviousSpec`, image đã kéo trước, ops image, image của mọi lịch cron, image hạ tầng (Traefik, cloudflared, registry, buildkitd); ngoài ra không bao giờ xoá image được kéo trong 60 phút gần nhất hoặc thuộc service đang rollout (phòng trường hợp danh sách giữ lại tới node trễ hơn lệnh cập nhật service); trên build node, giới hạn cache BuildKit bằng gcpolicy trong `buildkitd.toml` với `maxUsedSpace = \"20%\"` và `keepDuration = \"168h\"`, ghim phiên bản BuildKit có hai khoá này (khoá cũ `gckeepstorage` không dùng); không bao giờ xoá volume. Kết quả (dung lượng giải phóng, lỗi) gửi qua outbox; lỗi phát `node.cleanup_failed`. Dọn xong mà disk vẫn > 90% thì không chạy lại vòng lặp mà để cảnh báo `node.disk_high` của phase 2 báo."
+          },
+          {
+           "text": "Biến tham chiếu cấp project: bảng `project_env(project_id, key, value_enc, is_secret)`. Giá trị env của app (và của stack ở phase 9, cron ở phase 8) được dùng cú pháp `${{project.KEY}}`; control plane giải bằng một bộ giải duy nhất `internal/cp/envref` lúc render snapshot. Khoá không tồn tại làm render thất bại với thông báo nêu tên khoá. Nếu biến project được tham chiếu là bí mật thì biến kết quả của app cũng được coi là bí mật (đi đường Swarm secret), bất kể cờ của app. Đổi biến project không tự redeploy."
+          },
+          {
            "text": "Dọn image: luôn giữ image đang chạy, image trong `PreviousSpec` của Swarm và 5 deployment thành công gần nhất; deployment lỗi tính riêng (giữ 3). Xoá manifest theo digest (`REGISTRY_STORAGE_DELETE_ENABLED`); GC cần registry read-only nên build/push của cụm bị hoãn trong lúc GC: chạy theo lịch hằng tuần trong cửa sổ bảo trì cấu hình được (mặc định Chủ nhật 03:00 theo timezone của cụm) và có nút chạy ngay; deployment trong lúc GC xếp hàng."
           },
           {
            "text": "Kéo trước image: sau khi deployment `healthy`, chạy global job kéo image hiện tại lên mọi node đủ điều kiện, để việc dời task khi build node chết không cần registry."
           },
           {
-           "text": "RBAC/audit/sự kiện: route app, env, deploy, rollback, log, registry credentials có `x-permission` + audit; phát `deploy.succeeded|failed|rolled_back` qua `events.Emit`."
+           "text": "RBAC/audit/sự kiện: route app, env, deploy, rollback, log, registry credentials có `x-permission` + audit; phát `deploy.succeeded|failed|rolled_back|cancelled` qua `events.Emit`. Phase 11 thêm cột `deployments.preview_id`; từ đó mọi quy tắc tuần tự, supersede, snapshot/rollback, giữ secret và image ở phase này áp theo khoá `(app_id, preview_id)` và production lọc `preview_id IS NULL`."
           },
           {
            "text": "UI: wizard tạo app, trang app (deployments, logs, env có cờ secret, domains, settings), Deploy và Rollback."
@@ -1448,7 +1561,7 @@
          "type": "code",
          "language": "text",
          "title": "File tạo / sửa",
-         "text": "Create: internal/cp/servicespec/ (app, job, infra, admission, secrets naming), internal/cp/apps/, internal/cp/deploy/ (state machine, tuần tự hoá, snapshot), internal/cp/registry/ (CA cụm, token server, dọn image)\nCreate: internal/agent/build/ (clone với GIT_ASKPASS, Dockerfile/Railpack, BuildKit client, quản lý container buildkitd + buildkitd.toml), internal/agent/registryhost/ (container distribution, /etc/hosts, CA), internal/agent/services/ (ensure service với version index, theo dõi rollout, logs)\nModify: cmd/healthcheck/, cmd/envexec/, internal/agent/nodeprep/\nCreate: migrations/<timestamp>_apps_deployments.sql\nModify: proto/agent/v1/agent.proto, api/openapi.yaml, internal/cp/rbac/policy.go, web/src/routes/apps/*"
+         "text": "Create: internal/cp/servicespec/ (app, job, infra, admission, secrets naming), internal/cp/apps/, internal/cp/deploy/ (state machine, tuần tự hoá, snapshot), internal/cp/registry/ (CA cụm, token server, dọn image)\nCreate: internal/agent/build/ (clone với GIT_ASKPASS, Dockerfile/Railpack, BuildKit client, quản lý container buildkitd + buildkitd.toml), internal/agent/registryhost/ (container distribution, /etc/hosts, CA), internal/agent/services/ (ensure service với version index, theo dõi rollout, logs)\nModify: cmd/healthcheck/, cmd/envexec/, internal/agent/nodeprep/\nCreate: migrations/<timestamp>_apps_deployments.sql (kèm project_env, clusters.max_concurrent_builds, build_log_chunks)\nCreate: internal/agent/cleanup/ (dọn Docker theo lịch cục bộ và theo ngưỡng disk), internal/cp/envref/ (giải ${{project.KEY}})\nModify: proto/agent/v1/agent.proto, api/openapi.yaml, internal/cp/rbac/policy.go, web/src/routes/apps/*"
         },
         {
          "type": "list",
@@ -1473,10 +1586,19 @@
            "text": "Deployment tuần tự + supersede + snapshot + rollback tay."
           },
           {
-           "text": "Log build/runtime."
+           "text": "Log build/runtime; stream log build trực tiếp."
           },
           {
            "text": "Dọn image có bảo vệ; kéo trước image."
+          },
+          {
+           "text": "Bộ điều phối build theo cụm; deployment không cần build bỏ qua slot; huỷ với `cancelling` + compare-and-set; timeout bước."
+          },
+          {
+           "text": "Dọn Docker trên node (danh sách giữ lại từ desired state, giới hạn cache BuildKit)."
+          },
+          {
+           "text": "Biến tham chiếu `${{project.KEY}}`."
           },
           {
            "text": "RBAC/audit/sự kiện; UI."
@@ -1512,7 +1634,23 @@
            "done": false
           },
           {
-           "text": "Log",
+           "text": "Log + stream log build trực tiếp",
+           "done": false
+          },
+          {
+           "text": "Huỷ deployment (`cancelling` → `cancelled`, compare-and-set)",
+           "done": false
+          },
+          {
+           "text": "Bộ điều phối build theo cụm + deployment không cần build bỏ qua slot + timeout bước",
+           "done": false
+          },
+          {
+           "text": "Dọn Docker trên node + giới hạn cache BuildKit",
+           "done": false
+          },
+          {
+           "text": "Biến `${{project.KEY}}`",
            "done": false
           },
           {
@@ -1568,6 +1706,38 @@
           {
            "text": "Build trên build node 1 GB RAM không làm app khác trên node đó bị OOM-kill.",
            "badge": "gate"
+          },
+          {
+           "text": "Huỷ deployment đang `building`: trạng thái `cancelled`, không có image mới trong registry, bản đang chạy không đổi; nút huỷ không có ở deployment `rolling_out`.",
+           "badge": "gate"
+          },
+          {
+           "text": "Huỷ khi agent build node đang mất kết nối: deployment ở `cancelling` vẫn giữ slot, deployment kế tiếp không bắt đầu; kết quả \"đã push\" tới trễ không đưa deployment đã huỷ sang `rolling_out`.",
+           "badge": "gate"
+          },
+          {
+           "text": "Rollback tay của app B trong lúc app A đang build 15 phút: rollback của B chạy ngay, không chờ slot.",
+           "badge": "gate"
+          },
+          {
+           "text": "Mở trang deployment khi build đang chạy: log hiện tiếp trong dưới 2 giây sau khi agent ghi; log không chứa token clone. Ngắt kết nối agent 2 phút giữa build: log lưu cuối cùng vẫn đầy đủ.",
+           "badge": "gate"
+          },
+          {
+           "text": "`max_concurrent_builds=1`, đẩy 3 app cùng lúc: tại mọi thời điểm chỉ một deployment ở `cloning|building|pushing`; hai cái còn lại `queued` rồi lần lượt chạy.",
+           "badge": "gate"
+          },
+          {
+           "text": "Lấp đĩa node tới 91%: dọn chạy ngay một lần, giải phóng image không dùng; image đã kéo trước, ops image, image của cron và mọi volume vẫn còn; disk vẫn trên 90% vì volume thì không dọn lại trước 30 phút và có cảnh báo `node.disk_high`; tắt control plane thì dọn theo lịch vẫn chạy.",
+           "badge": "gate"
+          },
+          {
+           "text": "App tham chiếu `${{project.DB_HOST}}` và `${{project.API_KEY}}` (bí mật): biến thứ hai xuất hiện dưới dạng Swarm secret, không có trong `docker service inspect`; tham chiếu khoá không tồn tại làm deployment thất bại ở bước render.",
+           "badge": "gate"
+          },
+          {
+           "text": "Đổi `project.DB_HOST` sang giá trị sai, redeploy rồi Rollback: bản trước chạy với giá trị `DB_HOST` cũ.",
+           "badge": "gate"
           }
          ]
         },
@@ -1598,7 +1768,7 @@
        ]
       },
       {
-       "title": "Phase 6 · Git Providers · 3w",
+       "title": "Phase 6 · Git Providers · 3.5w",
        "blocks": [
         {
          "type": "key-value",
@@ -1613,7 +1783,7 @@
           },
           {
            "key": "Effort",
-           "value": "3w"
+           "value": "3.5w"
           },
           {
            "key": "Phụ thuộc",
@@ -1635,10 +1805,10 @@
          "title": "Yêu cầu",
          "items": [
           {
-           "text": "Interface chung (ba biến thể thật): ```go type Provider interface { Kind() Kind ListRepos(ctx, conn) ([]Repo, error) ListBranches(ctx, conn, repo) ([]string, error) EnsureWebhook(ctx, conn, repo, url, secret) (hookID string, err error) DeleteWebhook(ctx, conn, repo, hookID) error ParseWebhook(r *http.Request, secret []byte) (PushEvent, error) CloneCredential(ctx, conn, repo) (CloneAuth, error) // ngắn hạn SetCommitStatus(ctx, conn, repo, sha string, s Status) error } ```"
+           "text": "Interface chung (ba biến thể thật):"
           },
           {
-           "text": "GitHub: GitHub App Manifest flow: người dùng bấm \"Tạo GitHub App\", control plane POST manifest (webhook URL, quyền contents:read, metadata:read, statuses:write), nhận code, đổi lấy app id + private key + webhook secret + client secret, lưu mã hoá; sau đó cài App vào tài khoản/org. Clone bằng installation token. Kiểm `X-Hub-Signature-256`. Hỗ trợ GitHub Enterprise Server trong v1 (người dùng chốt ở Validation Session 1): endpoint đổi code là `https://HOSTNAME/api/v3/app-manifests/{code}/conversions` (có tài liệu); URL form tạo App trên GHES (`https://HOSTNAME/settings/apps/new`) là suy luận [UNVERIFIED: cần test trên GHES thật]."
+           "text": "GitHub: GitHub App Manifest flow: người dùng bấm \"Tạo GitHub App\", control plane POST manifest (webhook URL, quyền contents:read, metadata:read, statuses:write, pull_requests:read; đăng ký sự kiện `push` và `pull_request` — hai mục sau dùng ở phase 11, xin ngay từ đầu để người dùng không phải duyệt lại quyền App) , nhận code, đổi lấy app id + private key + webhook secret + client secret, lưu mã hoá; sau đó cài App vào tài khoản/org. Clone bằng installation token. Kiểm `X-Hub-Signature-256`. Hỗ trợ GitHub Enterprise Server trong v1 (người dùng chốt ở Validation Session 1): endpoint đổi code là `https://HOSTNAME/api/v3/app-manifests/{code}/conversions` (có tài liệu); URL form tạo App trên GHES (`https://HOSTNAME/settings/apps/new`) là suy luận [UNVERIFIED: cần test trên GHES thật]."
           },
           {
            "text": "GitLab: OAuth2 application có PKCE (gitlab.com hoặc self-managed theo base URL), lưu access + refresh token mã hoá; access token sống 2 giờ và mỗi lần refresh đổi cả hai token, nên việc refresh phải nằm trong transaction có khoá dòng để hai worker không refresh đồng thời; project hook với secret token (`X-Gitlab-Token`); commit status API; clone bằng OAuth token."
@@ -1647,10 +1817,13 @@
            "text": "Gitea/Forgejo: Forgejo ở mức best-effort qua adapter Gitea (Validation Session 1): chạy chung bộ test Gitea trong job nightly mang tính tham khảo, không chặn phát hành khi lệch. OAuth2 application theo base URL; repo webhook với secret, kiểm HMAC-SHA256 qua `X-Gitea-Signature` (Forgejo gửi cả `X-Forgejo-Signature` lẫn `X-Gitea-Signature`, nên một adapter dùng chung; API OAuth/webhook/status chưa lệch nhau theo research-02 mục 3); clone bằng OAuth token trên Forgejo [UNVERIFIED: cần test tích hợp]; commit status API."
           },
           {
-           "text": "Webhook endpoint `/webhooks/{provider}/{connection-id}`: Kiểm chữ ký đồng bộ trước khi đưa vào hàng đợi; so sánh constant-time (kể cả `X-Gitlab-Token`); từ chối hook Gitea có secret rỗng. Khử trùng theo `(connection, ref, after_sha)` ngoài delivery ID (delivery ID không nằm trong phần được ký nên không chống replay). Trước khi deploy, hỏi API provider để xác nhận SHA vẫn là đầu branch; nếu không thì bỏ qua (chống replay payload cũ). Trả 2xx nhanh rồi xử lý qua River; deployment đi qua hàng đợi tuần tự của app (phase 5)."
+           "text": "Webhook endpoint `/webhooks/{provider}/{connection-id}`: Kiểm chữ ký đồng bộ trước khi đưa vào hàng đợi; so sánh constant-time (kể cả `X-Gitlab-Token`); từ chối hook Gitea có secret rỗng. Khử trùng theo `(connection, ref, after_sha)` ngoài delivery ID (delivery ID không nằm trong phần được ký nên không chống replay). Trước khi deploy, hỏi API provider để xác nhận SHA vẫn là đầu branch; nếu không thì bỏ qua (chống replay payload cũ). `EnsureWebhook` luôn đăng ký cả sự kiện push lẫn pull/merge request (idempotent: cập nhật hook đã có); bộ xử lý phân loại theo loại sự kiện và trả 2xx bỏ qua với mọi sự kiện không phải push cho tới khi phase 11 thêm bộ xử lý PR. Trả 2xx nhanh rồi xử lý qua River; deployment đi qua hàng đợi tuần tự của app (phase 5)."
           },
           {
-           "text": "Push vào branch theo dõi thì tạo deployment; commit status `pending` khi bắt đầu, `success`/`failure` khi kết thúc, link về trang deployment."
+           "text": "Push vào branch theo dõi thì tạo deployment; commit status `pending` khi bắt đầu, `success`/`failure` khi kết thúc, `error` với mô tả \"đã huỷ\" khi `cancelled` và \"được thay thế\" khi `superseded`, link về trang deployment."
+          },
+          {
+           "text": "Watch paths (monorepo): app có `watch_paths` (danh sách glob kiểu ``, hỗ trợ mẫu loại trừ `!`); rỗng nghĩa là mọi push đều deploy. Stack nhận cùng tính năng ở phase 9. Khi có push hợp lệ: Base là `source_sha` của deployment production `healthy` gần nhất của app (không dùng `before` của payload, không dùng deployment lỗi hay đã rollback); lấy danh sách file bằng `ChangedFiles(base, head)`. Không dựa vào danh sách file trong payload (GitLab chỉ gửi 20 commit, GitHub cắt danh sách commit). `ChangedFiles` kiểm base là tổ tiên của head (GitHub: `status` là `ahead` hoặc `behind_by == 0`; GitLab/Gitea: tương đương) và coi kết quả chạm giới hạn của provider (GitHub 300 file) là không đầy đủ. File đổi tên được so khớp theo cả tên cũ lẫn tên mới. Fallback luôn là deploy: chưa có deployment `healthy` nào, API compare lỗi, base không phải tổ tiên của head (force-push) hoặc kết quả không đầy đủ thì deploy và ghi lý do. Đây là điểm khác có chủ đích với Dokploy, nơi thiếu danh sách file dẫn tới bỏ qua deploy. Không file nào khớp: không tạo deployment, ghi bản ghi \"bỏ qua (watch paths)\" vào lịch sử của app, đặt commit status `success` với mô tả \"bỏ qua: không đổi file được theo dõi\" để branch protection không bị kẹt. Bấm Deploy tay luôn bỏ qua watch paths. Compare API: GitHub `GET /repos/{owner}/{repo}/compare/{base}...{head}`, GitLab `GET /projects/:id/repository/compare`, Gitea `GET /repos/{owner}/{repo}/compare/{base}...{head}` (có trong tài liệu API Gitea 1.22; phiên bản thấp nhất được hỗ trợ kiểm bằng container CI). GitHub compare trả tối đa 300 file cho cả phép so sánh (đã xác nhận trong tài liệu REST)."
           },
           {
            "text": "Webhook có owner là app hoặc stack (phase 9 dùng lại); đổi repo/branch hoặc xoá owner thì gỡ webhook cũ."
@@ -1665,9 +1838,15 @@
         },
         {
          "type": "code",
+         "language": "go",
+         "title": "Interface",
+         "text": "  type Provider interface {\n      Kind() Kind\n      ListRepos(ctx, conn) ([]Repo, error)\n      ListBranches(ctx, conn, repo) ([]string, error)\n      EnsureWebhook(ctx, conn, repo, url, secret) (hookID string, err error)\n      DeleteWebhook(ctx, conn, repo, hookID) error\n      ParseWebhook(r *http.Request, secret []byte) (PushEvent, error)\n      CloneCredential(ctx, conn, repo) (CloneAuth, error) // ngắn hạn\n      SetCommitStatus(ctx, conn, repo, sha string, s Status) error\n    ChangedFiles(ctx, conn, repo, base, head string) (files []string, complete bool, err error) // files gồm cả đường dẫn cũ của file đổi tên; complete=false khi base không phải tổ tiên của head hoặc chạm giới hạn số file\n  }"
+        },
+        {
+         "type": "code",
          "language": "text",
          "title": "File tạo / sửa",
-         "text": "Create: internal/cp/gitprovider/provider.go, internal/cp/gitprovider/github/, internal/cp/gitprovider/gitlab/, internal/cp/gitprovider/gitea/, internal/cp/webhooks/\nCreate: migrations/00006_git_connections.sql\nModify: internal/cp/deploy/ (trigger từ push, gọi SetCommitStatus), api/openapi.yaml, internal/cp/rbac/policy.go, web/src/routes/settings/git*, wizard tạo app"
+         "text": "Create: internal/cp/gitprovider/provider.go, internal/cp/gitprovider/github/, internal/cp/gitprovider/gitlab/, internal/cp/gitprovider/gitea/, internal/cp/webhooks/\nCreate: migrations/<timestamp>_git_connections.sql (kèm cột apps.watch_paths)\nModify: internal/cp/deploy/ (trigger từ push, gọi SetCommitStatus), api/openapi.yaml, internal/cp/rbac/policy.go, web/src/routes/settings/git*, wizard tạo app"
         },
         {
          "type": "list",
@@ -1689,7 +1868,7 @@
            "text": "Webhook endpoint + khử trùng + River."
           },
           {
-           "text": "Nối deploy pipeline với commit status."
+           "text": "Nối deploy pipeline với commit status; watch paths qua `ChangedFiles` với fallback deploy."
           },
           {
            "text": "UI kết nối provider, chọn repo/branch trong wizard."
@@ -1725,6 +1904,10 @@
            "done": false
           },
           {
+           "text": "Watch paths (`ChangedFiles`, base = SHA đang chạy, fallback deploy)",
+           "done": false
+          },
+          {
            "text": "UI",
            "done": false
           }
@@ -1748,6 +1931,14 @@
           },
           {
            "text": "Callback OAuth/Manifest với `state` không khớp session bị từ chối.",
+           "badge": "gate"
+          },
+          {
+           "text": "App có `watch_paths: [\"services/api/\"]` trong monorepo: push chỉ sửa `docs/` không tạo deployment và commit status là `success` \"bỏ qua\"; push tiếp theo sửa `services/api/main.go` thì deploy; force-push làm mất base thì vẫn deploy và ghi lý do fallback. Force-push đưa branch về trước commit đang chạy rồi thêm commit chỉ sửa `docs/`: vẫn deploy (base không còn là tổ tiên). `git mv services/api/x.go lib/` thì deploy.",
+           "badge": "gate"
+          },
+          {
+           "text": "Sự kiện PR tới endpoint của GitHub, GitLab, Gitea trước khi có phase 11 nhận 2xx và không tạo deployment.",
            "badge": "gate"
           }
          ]
@@ -1782,7 +1973,7 @@
        ]
       },
       {
-       "title": "Phase 7 · Databases & Backups · 3w",
+       "title": "Phase 7 · Databases & Backups · 3.5w",
        "blocks": [
         {
          "type": "key-value",
@@ -1797,7 +1988,7 @@
           },
           {
            "key": "Effort",
-           "value": "3w"
+           "value": "3.5w"
           },
           {
            "key": "Phụ thuộc",
@@ -1825,13 +2016,13 @@
            "text": "Liên kết với app: gắn app vào `bn-db-<id>` và thêm `DATABASE_URL` dạng secret env (phase 5), rồi redeploy (đi qua hàng đợi tuần tự của app)."
           },
           {
-           "text": "Mở public (đã được người dùng xác nhận là trong phạm vi): chỉ admin; publish port mode `host` trên node của database, quy tắc `DOCKER-USER` chỉ cho IP trong allowlist; UI cảnh báo rủi ro; có audit."
+           "text": "Mở public (đã được người dùng xác nhận là trong phạm vi): chỉ admin, route có `reauth: true` (phase 1) ; publish port mode `host` trên node của database, quy tắc `DOCKER-USER` chỉ cho IP trong allowlist; UI cảnh báo rủi ro; có audit."
           },
           {
            "text": "UI nói rõ: database không có HA trong v1; khôi phục bằng restore."
           },
           {
-           "text": "Ops image `images/ops/Dockerfile`: pg_dump/psql (client mới nhất), mysqldump/mysql, mongodump/mongorestore, redis-cli, restic. Phát hành lên GHCR ở phase 11; dev build vào registry của cụm."
+           "text": "Ops image `images/ops/Dockerfile`: pg_dump/psql (client mới nhất), mysqldump/mysql, mongodump/mongorestore, redis-cli, restic. Phát hành lên GHCR ở phase 12; dev build vào registry của cụm."
           },
           {
            "text": "Đích backup: `backup_destinations(name, preset: aws|r2|b2|minio|custom, endpoint, region, bucket, prefix, backup_key_enc, backup_secret_enc, prune_key_enc, prune_secret_enc)`. Preset R2: `https://<account-id>.r2.cloudflarestorage.com`, region `auto`. Endpoint `custom` đi qua `netpolicy`. UI khuyến nghị: credential backup chỉ có quyền ghi (không xoá) theo prefix; credential prune riêng có quyền xoá; R2 không có object lock nên khuyến nghị bật versioning/lifecycle nếu nhà cung cấp hỗ trợ."
@@ -1846,13 +2037,13 @@
            "text": "Retention/prune: `restic forget --keep-daily N --keep-weekly M --keep-monthly K --prune` chạy như job riêng, do control plane điều phối (cần control plane online; không gấp về thời gian), mount credential prune trong một Swarm secret tạo ngay trước job và xoá ngay sau job. Backup và prune trên cùng repo không bao giờ chạy đồng thời (khoá theo repo ở control plane; scheduler bỏ qua lượt backup nếu prune đang giữ khoá và ghi lý do)."
           },
           {
-           "text": "Recovery kit: chỉ owner/admin tải được; mỗi lần tải được audit; chứa endpoint, bucket, mật khẩu restic."
+           "text": "Recovery kit: chỉ owner/admin tải được, route có `reauth: true` (phase 1) ; mỗi lần tải được audit; chứa endpoint, bucket, mật khẩu restic."
           },
           {
            "text": "Restore: tạo database mới cùng engine/phiên bản, chạy job `restic dump` đổ vào client tương ứng; không ghi đè database đang chạy."
           },
           {
-           "text": "Backup volume của app: `restic backup` thư mục volume mount read-only; UI ghi rõ không đảm bảo nhất quán khi đang ghi."
+           "text": "Backup volume của app: `restic backup` thư mục volume mount read-only; UI ghi rõ không đảm bảo nhất quán khi đang ghi. Tuỳ chọn \"dừng service trong lúc backup\" (mặc định tắt, UI cảnh báo có downtime): cờ `stop_service` và thời gian tạm dừng tối đa (mặc định 30 phút) nằm trong mục lịch đã ký gửi tới manager (phase 8), nên chạy được khi control plane offline. Agent đang chạy scheduler điều phối toàn bộ, job backup không có quyền gọi Docker API: (1) ghi một lease cục bộ trong bbolt và nhãn service `bn.backup.paused_until=<deadline>`, (2) scale service về 0 và chờ task dừng hẳn, (3) chạy job restic, (4) luôn scale về số replica của desired state hiện tại (không phải số đã ghi trước đó) kể cả khi restic lỗi, rồi gỡ lease; kết quả giữ mã thoát của restic. Reconciler trên leader tôn trọng nhãn `bn.backup.paused_until` cho tới deadline mà không cần control plane; quá deadline thì reconciler khôi phục replica và phát `backup.failed`. Deployment của app tới trong lúc có lease sẽ chờ trong hàng đợi tuần tự của app cho tới khi lease được gỡ (tối đa bằng thời gian tạm dừng). Agent chết giữa chừng thì scheduler tiếp quản (phase 8) đọc nhãn, khôi phục replica và báo kết quả."
           },
           {
            "text": "`internal/agent/jobs` — một quy tắc giữ lại duy nhất (phase 8 dùng chung): service job đã xong được giữ làm dấu chống chạy trùng trong `max(10 phút, 2 × chu kỳ lịch)` rồi mới xoá. Spec job mang label `bn.job.schedule`, `bn.job.scheduled_at`, `bn.job.deadline` để bất kỳ agent manager nào cũng nhận lại được job. Kết quả gửi với event id = tên service (idempotent)."
@@ -1894,7 +2085,7 @@
            "text": "Prune tách riêng + khoá theo repo."
           },
           {
-           "text": "Restore; recovery kit có RBAC; backup volume."
+           "text": "Restore; recovery kit có RBAC; backup volume (kể cả tuỳ chọn dừng service)."
           },
           {
            "text": "RBAC/audit/sự kiện; UI."
@@ -1931,6 +2122,10 @@
           },
           {
            "text": "Restore, recovery kit, backup volume",
+           "done": false
+          },
+          {
+           "text": "Backup volume có tuỳ chọn dừng service, luôn khôi phục replica",
            "done": false
           },
           {
@@ -1974,6 +2169,14 @@
           {
            "text": "Developer tải recovery kit: 403 và có bản ghi audit bị từ chối.",
            "badge": "gate"
+          },
+          {
+           "text": "Backup volume với tuỳ chọn dừng service bật: service về 0 replica trong lúc backup rồi trở lại đúng số replica của desired state; làm restic lỗi giả: service vẫn được khôi phục và lần backup báo `failed`; kill agent giữa chừng: replica vẫn được khôi phục trước deadline; tắt control plane rồi để lịch kích hoạt: backup vẫn nhất quán (service không bị reconciler đẩy lên giữa chừng); push vào app trong lúc backup: deployment chờ tới khi backup xong.",
+           "badge": "gate"
+          },
+          {
+           "text": "Tải recovery kit khi phiên đã xác thực hơn 5 phút trước trả `REAUTH_REQUIRED`.",
+           "badge": "gate"
           }
          ]
         },
@@ -2007,7 +2210,7 @@
        ]
       },
       {
-       "title": "Phase 8 · Scheduler, Cron & Notifications · 2w",
+       "title": "Phase 8 · Scheduler, Cron & Notifications · 2.3w",
        "blocks": [
         {
          "type": "key-value",
@@ -2022,7 +2225,7 @@
           },
           {
            "key": "Effort",
-           "value": "2w"
+           "value": "2.3w"
           },
           {
            "key": "Phụ thuộc",
@@ -2059,19 +2262,22 @@
            "text": "Nhận lại job khi đổi leader: scheduler mới quét service `bn-cron-*`/`bn-backup-*` theo label (deadline, schedule) và tiếp quản timeout, thu kết quả, dọn dẹp. Mọi agent manager đều báo được kết quả (event id = tên service)."
           },
           {
-           "text": "Thực thi (`internal/agent/jobs` + `servicespec`): `replicated-job` với image hiện tại của app (cùng network; env của app chỉ được kế thừa khi người dùng bật) hoặc image tuỳ ý (không kế thừa env, đi qua chính sách kiểm duyệt); lệnh; timeout; chính sách song song `forbid | allow`; `MaxAttempts` tường minh."
+           "text": "Thực thi (`internal/agent/jobs` + `servicespec`): `replicated-job` với image hiện tại của app (cùng network; env của app chỉ được kế thừa khi người dùng bật, và lấy đúng giá trị đã giải trong snapshot deployment đang chạy, nên `${{project.KEY}}` đi qua cùng `internal/cp/envref` ) hoặc image tuỳ ý (không kế thừa env, đi qua chính sách kiểm duyệt); lệnh; timeout; chính sách song song `forbid | allow`; `MaxAttempts` tường minh."
           },
           {
            "text": "Kết quả: exit code, thời gian, log (cắt 1 MB) vào outbox (lớp ưu tiên của phase 2), đồng bộ lên control plane."
           },
           {
-           "text": "Lịch backup phase 7 dùng cùng cơ chế (loại job `backup`), tôn trọng khoá theo repo."
+           "text": "Lịch backup phase 7 dùng cùng cơ chế (loại job `backup`), tôn trọng khoá theo repo; mục lịch backup volume mang cờ `stop_service` và thời gian tạm dừng tối đa, và scheduler thực hiện quy trình lease của phase 7."
           },
           {
-           "text": "Thông báo — chỉ thêm phần tiêu thụ cho contract `events.Emit` từ phase 1: kênh `telegram | slack | email (SMTP) | webhook (URL + HMAC)` cấu hình mã hoá, URL webhook đi qua `netpolicy`. Quy tắc theo sự kiện đã được các phase trước phát: deploy, cron, backup, node offline > 2 phút, disk > 90%, gia hạn cert thất bại, lệch giờ, đổi session agent bất thường. Khi control plane offline, thông báo về các lượt chạy đi muộn sau khi đồng bộ (tài liệu)."
+           "text": "Thông báo — chỉ thêm phần tiêu thụ cho contract `events.Emit` từ phase 1: kênh `telegram | slack | email (SMTP) | webhook (URL + HMAC)` cấu hình mã hoá, URL webhook đi qua `netpolicy`. Quy tắc theo sự kiện đã được các phase trước phát: deploy, cron, backup, node offline > 2 phút, disk > 90%, gia hạn cert thất bại, cert tải lên sắp hết hạn, dọn Docker lỗi, preview (phase 11), lệch giờ, đổi session agent bất thường, CPU/RAM vượt ngưỡng (bên dưới). Khi control plane offline, thông báo về các lượt chạy đi muộn sau khi đồng bộ (tài liệu)."
           },
           {
-           "text": "RBAC/audit: route cron, kênh, quy tắc, gửi thử có `x-permission` + audit."
+           "text": "Cảnh báo ngưỡng CPU/RAM theo node: đánh giá ở control plane trên mẫu metrics 15 giây của phase 2 (không thêm thu thập mới). Mỗi cụm có quy tắc `metric: cpu|memory`, ngưỡng % (mặc định 90) và thời gian giữ ngưỡng (mặc định 5 phút: mọi mẫu trong cửa sổ đều vượt ngưỡng mới báo). Cùng một node và metric không báo lại trong 30 phút (hằng số, để không spam). Trạng thái lần báo gần nhất lưu trong bảng `node_alert_state` để control plane restart không báo lại. Phát `node.cpu_high|memory_high` qua `events.Emit`; node mất kết nối không bị tính là vượt ngưỡng (đã có `node.offline`). Cảnh báo này cần control plane online (tài liệu)."
+          },
+          {
+           "text": "RBAC/audit: route cron, kênh, quy tắc, ngưỡng CPU/RAM, gửi thử có `x-permission` + audit."
           },
           {
            "text": "UI: cron theo app (xem trước 5 lần chạy kế), lịch sử + log; kênh và quy tắc thông báo, nút gửi thử."
@@ -2104,7 +2310,7 @@
            "text": "Lịch backup."
           },
           {
-           "text": "Kênh + quy tắc thông báo."
+           "text": "Kênh + quy tắc thông báo; cảnh báo ngưỡng CPU/RAM."
           },
           {
            "text": "RBAC/audit; UI."
@@ -2140,6 +2346,10 @@
            "done": false
           },
           {
+           "text": "Cảnh báo ngưỡng CPU/RAM có thời gian giữ và chống báo lặp",
+           "done": false
+          },
+          {
            "text": "RBAC/audit cho route mới",
            "done": false
           },
@@ -2172,6 +2382,10 @@
           {
            "text": "Cron exit 1 thì Telegram nhận thông báo trong 1 phút (khi control plane online).",
            "badge": "gate"
+          },
+          {
+           "text": "Ép CPU một node lên 100% trong 4 phút: không có cảnh báo; giữ 6 phút: đúng một cảnh báo; giữ tiếp 20 phút: không có cảnh báo thứ hai; hạ tải rồi vượt lại sau 30 phút: có cảnh báo mới.",
+           "badge": "gate"
           }
          ]
         },
@@ -2199,7 +2413,7 @@
        ]
       },
       {
-       "title": "Phase 9 · Compose & Templates · 2w",
+       "title": "Phase 9 · Compose & Templates · 2.4w",
        "blocks": [
         {
          "type": "key-value",
@@ -2214,7 +2428,7 @@
           },
           {
            "key": "Effort",
-           "value": "2w"
+           "value": "2.4w"
           },
           {
            "key": "Phụ thuộc",
@@ -2239,7 +2453,7 @@
            "text": "Parse bằng `compose-spec/compose-go` v2."
           },
           {
-           "text": "Biến đổi (gọi helper của `servicespec`, không tự sinh quy tắc riêng): Chạy chính sách kiểm duyệt của phase 5 trên từng service (bind mount, `cap_add`, `privileged`, host network, volume `external`, placement); vi phạm thì từ chối, trừ khi admin bật `privileged` cho stack. Xoá mọi label `traefik.*` người dùng viết; route lấy từ bảng `domains` (owner_type `stack_service`) và được agent ingress sinh như app. Service có `build:` thì build qua pipeline phase 5 rồi thay bằng `image@sha256:...` trong registry cụm. Gắn `bn-proj-<id>`; đặt MTU tường minh cho mọi network khai báo và network `default` của stack (phòng khi `default-network-opts` không áp). Service mount named volume được ghim `node.labels.bn.node==<id>` (node chọn ở lần deploy đầu, lưu cùng stack) và đặt `update_config.order=stop-first`; UI cảnh báo service có trạng thái không HA. Env/secret từ UI đưa vào dạng Swarm secret tham chiếu; `stack_revisions` lưu bản có placeholder, không bao giờ lưu giá trị secret. Thêm constraint `bn.ready`; trường Swarm bỏ qua (`container_name`, `depends_on` có điều kiện...) thì cảnh báo."
+           "text": "Biến đổi (gọi helper của `servicespec`, không tự sinh quy tắc riêng): Chạy chính sách kiểm duyệt của phase 5 trên từng service (bind mount, `cap_add`, `privileged`, host network, volume `external`, placement); vi phạm thì từ chối, trừ khi admin bật `privileged` cho stack. Route bật `privileged` cho stack có `reauth: true` (phase 1). Xoá mọi label `traefik.*` người dùng viết; route lấy từ bảng `domains` (owner_type `stack_service`) và được agent ingress sinh như app. Service có `build:` thì build qua pipeline phase 5 rồi thay bằng `image@sha256:...` trong registry cụm. Build đi qua bộ điều phối build của cụm (tính vào `max_concurrent_builds`) và huỷ được như app. Gắn `bn-proj-<id>`; đặt MTU tường minh cho mọi network khai báo và network `default` của stack (phòng khi `default-network-opts` không áp). Service mount named volume được ghim `node.labels.bn.node==<id>` (node chọn ở lần deploy đầu, lưu cùng stack) và đặt `update_config.order=stop-first`; UI cảnh báo service có trạng thái không HA. Env/secret từ UI đưa vào dạng Swarm secret tham chiếu; `stack_revisions` lưu bản có placeholder, không bao giờ lưu giá trị secret. Thêm constraint `bn.ready`; trường Swarm bỏ qua (`container_name`, `depends_on` có điều kiện...) thì cảnh báo."
           },
           {
            "text": "Deploy: agent leader chạy `docker stack deploy --with-registry-auth --prune -c <file> <stack>` với file đã biến đổi, rồi xoá file khỏi đĩa ngay sau đó. Các lần deploy của cùng một stack chạy tuần tự như app (phase 5)."
@@ -2251,7 +2465,13 @@
            "text": "Stack từ Git: dùng kết nối provider phase 6; webhook do `internal/cp/webhooks` quản lý với owner là stack; xoá stack hoặc đổi repo thì gỡ webhook."
           },
           {
-           "text": "Template: `templates/<name>/compose.yaml` + `template.yaml` (tên, mô tả, icon, biến có generator: password, domain, email), nhúng vào binary. Bộ v1 gồm 10 template: n8n, WordPress+MySQL, Plausible, Uptime Kuma, Gitea, MinIO, Metabase, Ghost, Umami, Vaultwarden. Mỗi template phải qua biến đổi mà không cần `privileged`."
+           "text": "Template: `templates/<name>/compose.yaml` + `template.yaml` (tên, mô tả, icon, biến có generator: password, domain, email, base64, uuid, jwt), nhúng vào binary. Bộ v1 gồm 10 template: n8n, WordPress+MySQL, Plausible, Uptime Kuma, Gitea, MinIO, Metabase, Ghost, Umami, Vaultwarden. Mỗi template phải qua biến đổi mà không cần `privileged`."
+          },
+          {
+           "text": "Generator bổ sung: `base64{bytes: N}` (N byte ngẫu nhiên mã hoá base64), `uuid` (UUID v4), `jwt{secret: <tên biến password/base64>, payload: {...}}` (ký HS256 bằng giá trị của một biến không phải `jwt` trong cùng template, không có hạn dùng vì giá trị không được sinh lại; dùng cho khoá anon/service của Supabase, Appwrite...). Mọi giá trị sinh ra một lần lúc cài, được coi là bí mật (Swarm secret theo quy tắc ở trên) và không sinh lại khi redeploy; generator tham chiếu biến không tồn tại hoặc biến `jwt` khác thì template bị từ chối khi nạp (kiểm trong CI cho mọi template nhúng). Env của stack dùng được `${{project.KEY}}` như app (phase 5)."
+          },
+          {
+           "text": "Watch paths cho stack từ Git: cột `stacks.watch_paths` với cùng quy tắc của phase 6; base là commit của `stack_revisions` `healthy` gần nhất (mỗi revision lưu `source_sha`)."
           },
           {
            "text": "RBAC/audit/sự kiện: route stack, revision, rollback, template có `x-permission` + audit; phát `deploy.*` cho stack."
@@ -2287,7 +2507,7 @@
            "text": "Revision + rollback; stack từ Git + webhook."
           },
           {
-           "text": "Template loader + bộ đầu tiên."
+           "text": "Template loader + bộ đầu tiên; generator base64/uuid/jwt và kiểm tham chiếu khi nạp."
           },
           {
            "text": "RBAC/audit; UI."
@@ -2320,6 +2540,14 @@
           },
           {
            "text": "Template loader + bộ đầu tiên",
+           "done": false
+          },
+          {
+           "text": "Generator base64, uuid, jwt",
+           "done": false
+          },
+          {
+           "text": "Watch paths cho stack",
            "done": false
           },
           {
@@ -2362,6 +2590,14 @@
           },
           {
            "text": "Rollback stack về revision trước trong một thao tác.",
+           "badge": "gate"
+          },
+          {
+           "text": "Template thử dùng `jwt` ký bằng biến `password`: token xác minh được bằng secret đó với đúng payload; redeploy không đổi giá trị; template có `jwt` tham chiếu biến `jwt` khác bị CI từ chối.",
+           "badge": "gate"
+          },
+          {
+           "text": "Stack từ Git có `watch_paths`: push chỉ sửa file ngoài danh sách không deploy lại stack.",
            "badge": "gate"
           }
          ]
@@ -2424,7 +2660,7 @@
          "title": "Yêu cầu",
          "items": [
           {
-           "text": "Team: mời bằng link token (gửi email nếu đã cấu hình SMTP ở phase 8), chấp nhận lời mời thì tạo tài khoản; đổi vai trò; gỡ thành viên (huỷ session của họ ngay). Không cho gỡ owner cuối cùng."
+           "text": "Team: mời bằng link token (gửi email nếu đã cấu hình SMTP ở phase 8), chấp nhận lời mời thì tạo tài khoản; đổi vai trò; gỡ thành viên (huỷ session và thu hồi API token của họ ngay — phase 1) . Không cho gỡ owner cuối cùng."
           },
           {
            "text": "Audit UI: danh sách có lọc theo người, hành động, kết quả (thành công/bị từ chối), đối tượng, thời gian. (Bỏ xuất CSV — Red Team O.)"
@@ -2535,7 +2771,301 @@
        ]
       },
       {
-       "title": "Phase 11 · E2E & Release · 3w",
+       "title": "Phase 11 · Preview Deployments · 3w",
+       "blocks": [
+        {
+         "type": "key-value",
+         "items": [
+          {
+           "key": "Trạng thái",
+           "value": "pending"
+          },
+          {
+           "key": "Ưu tiên",
+           "value": "P2"
+          },
+          {
+           "key": "Effort",
+           "value": "3w"
+          },
+          {
+           "key": "Phụ thuộc",
+           "value": "4, 5, 6, 7, 8, 10"
+          },
+          {
+           "key": "File",
+           "value": "phase-11-preview-deployments.md"
+          }
+         ]
+        },
+        {
+         "type": "text",
+         "variant": "lead",
+         "text": "Mỗi pull request (GitHub, GHES, GitLab merge request, Gitea/Forgejo) của một app có bật preview được build và chạy thành một bản preview có URL HTTPS riêng, chỉ khi cả tác giả PR lẫn người đẩy commit đều có quyền ghi vào repo; bản preview không bao giờ nhận secret, network, cache build hay lịch sử deployment của production, có giới hạn số lượng, và bị gỡ khi PR đóng hoặc merge."
+        },
+        {
+         "type": "list",
+         "title": "Yêu cầu",
+         "items": [
+          {
+           "text": "`app_preview_settings(app_id, enabled, limit DEFAULT 3)`; env riêng `app_preview_env(key, value_enc, is_secret)`. Cấu hình tài nguyên preview là hằng số của platform: 1 replica, 0.5 CPU, 512 MB. Chỉ người có quyền quản lý app mới bật/tắt và sửa env preview được."
+          },
+          {
+           "text": "Preview zone theo `(project, cụm)` `project_preview_zones(project_id, cluster_id, suffix, exposure: direct|tunnel)`, admin cấu hình. Bật preview cho một app cần zone của project trên cụm của app đó. `suffix` phải nằm trong allowlist zone của project (phase 4). Nếu suffix nằm dưới registrable domain của control plane hoặc của domain production trong project (tính bằng public suffix list `golang.org/x/net/publicsuffix`) thì UI hiện cảnh báo rõ rủi ro cùng site và khuyến nghị dùng một registrable domain riêng cho preview (ví dụ `example-preview.dev`), nhưng vẫn cho lưu; cookie của control plane đã có tiền tố `__Host-` (phase 1). `exposure=direct`: control plane cấp một cert wildcard `*.<suffix>` qua DNS-01 Cloudflare, chỉ phân phối tới Traefik của cụm đó, và tạo một record wildcard A `proxied=false` (mang dấu `managed-by: bennghe`) trỏ tới IP public của các node ingress của cụm đó. Preview mới không xin cert và không tạo record riêng. `exposure=tunnel`: không tạo record A (không lộ IP gốc). Cloudflare terminate TLS ở edge, mà Universal SSL chỉ phủ apex và một cấp subdomain, nên `suffix` phải đúng bằng apex của một zone Cloudflare: hostname preview nằm ngay dưới apex. Mỗi preview có một CNAME proxied tới tunnel và một dòng trong cấu hình ingress của tunnel (cơ chế dựng lại toàn bộ danh sách của phase 10)."
+          },
+          {
+           "text": "Hostname: `pr-<số PR>-<slug app, cắt>-<4 ký tự hex từ id app>.<suffix>`, nhãn đầu không quá 63 ký tự; phần hex tránh va chạm `hostname UNIQUE` giữa hai app có slug cắt giống nhau."
+          },
+          {
+           "text": "Dòng `domains` của preview: `owner_type=preview`, `tls_mode=preview_zone` (giá trị enum mới: dùng cert wildcard của zone, cert manager không xin cert riêng), `exposure` sao chép từ zone. Module `domains`/`cloudflare` bỏ qua bước tạo record A theo từng domain cho `owner_type=preview`; với tunnel thì tạo CNAME riêng như trên. Dòng do actor hệ thống (worker webhook) tạo, có audit với actor = kết nối provider."
+          },
+          {
+           "text": "Interface `Provider` (phase 6) thêm ba phương thức, mỗi provider một bản thật: GitHub/GHES: sự kiện `pull_request`; quyền qua `GET /repos/{owner}/{repo}/collaborators/{username}/permission`, hợp lệ khi trường `permission` là `admin` hoặc `write` (API ánh xạ `maintain` thành `write`) [UNVERIFIED: quyền App tối thiểu cho endpoint này; kiểm trên org thử]. GitLab: merge request hook; quyền qua `GET /projects/:id/members/all/:user_id` với access level ≥ Developer (30); người kích hoạt lấy từ trường `user` của hook. Gitea/Forgejo: sự kiện `pull_request`; quyền qua API permission của collaborator (endpoint `GET /repos/{owner}/{repo}/collaborators/{collaborator}/permission` có trong tài liệu API Gitea 1.22; bản hỗ trợ thấp nhất vẫn kiểm bằng container CI; Forgejo best-effort). Người kích hoạt sự kiện: GitHub và Gitea là `sender`, GitLab là `user` (\"User who triggered the event\" theo tài liệu webhook GitLab; Gitea ghi `sender` là \"the user who performed the action\"). Contract test có hai tài khoản vẫn kiểm rằng với sự kiện cập nhật PR đây chính là người đẩy commit."
+          },
+          {
+           "text": "Webhook: phase 6 đã đăng ký sự kiện PR cho mọi hook và trả 2xx bỏ qua khi chưa có phase này; phase 11 chỉ thêm bộ xử lý. Khoá khử trùng của sự kiện PR là `(connection, repo, pr_number, action, head_sha)`; khoá của push giữ nguyên. Bật preview cho app gọi lại `EnsureWebhook` (idempotent) để chắc hook có sự kiện PR."
+          },
+          {
+           "text": "Cổng chấp nhận cho `opened|synchronize|reopened` (kiểm theo thứ tự; bị từ chối thì ghi lý do vào lịch sử preview và đặt commit status context `bennghe/preview` về `failure` kèm lý do): Chữ ký webhook, khử trùng, và hỏi lại provider rằng `head_sha` vẫn là đầu PR. App bật preview; PR nhắm vào branch mà app đang theo dõi. Cả tác giả PR lẫn `sender` của sự kiện (người mở PR hoặc người đẩy commit) đều có quyền ghi (`CanWrite`), kiểm trực tiếp ở mỗi sự kiện, không cache. PR từ fork chỉ được build khi cả hai điều kiện này đúng; người có quyền đẩy vào fork nhưng không có quyền ghi repo gốc sẽ bị chặn ở chính sự kiện `synchronize` họ tạo ra. Số preview đang hoạt động của app nhỏ hơn `limit`, kiểm dưới `SELECT … FOR UPDATE` trên dòng `app_preview_settings`; đủ rồi thì bỏ qua và báo qua commit status, không đẩy preview cũ ra."
+          },
+          {
+           "text": "Ghim SHA: deployment preview lưu `source_sha` = `head_sha` đã qua cổng. Ngay trước khi chuyển sang `cloning`, bộ điều phối của phase 5 gọi lại `GetPullRequest`; nếu head đã đổi thì deployment thành `superseded` (sự kiện mới tự đi qua cổng). Agent fetch `refs/pull/<n>/head` (GitHub, Gitea) hoặc `refs/merge-requests/<iid>/head` (GitLab) từ repo gốc bằng credential ngắn hạn của phase 5–6, rồi `git checkout --detach <source_sha>`; không có SHA đó thì thất bại."
+          },
+          {
+           "text": "Lịch sử deployment: `deployments.preview_id` (NULL = production, FK tới `previews`). Mọi quy tắc của phase 5 và 6 áp theo khoá `(app_id, preview_id)`: unique job/advisory lock, supersede, snapshot thành công trước đó cho rollback tay và Swarm tự rollback, giữ secret của 5 deployment thành công, chặn tự deploy commit cũ hơn, base của watch paths, giữ image. Production luôn lọc `preview_id IS NULL`, nên rollback của production không bao giờ chọn snapshot của preview."
+          },
+          {
+           "text": "Build: build preview chạy trên một buildkitd riêng (`bn-buildkitd-preview`, container thường trên build node, thư mục state riêng, cùng giới hạn RAM/CPU của phase 5; agent chỉ khởi động nó khi có build preview và dừng sau 10 phút rảnh, state giữ trên đĩa ) với `cache-key` riêng cho preview, để PR không ghi được vào cache mount hay cache layer mà build production dùng lại. Token server của registry chỉ cấp cho buildkitd này quyền push vào repo `preview/<project>/<app>`. Secret lúc build (`--secret`) của preview chỉ lấy từ `app_preview_env`."
+          },
+          {
+           "text": "Env lúc chạy: env preview = biến thường của app có giá trị là chữ (literal) + `app_preview_env`. Khoá khai báo trong `app_preview_env` thay hẳn biến cùng tên của app. Bộ giải `${{project.KEY}}` (phase 5) chạy ở chế độ preview: không bao giờ giải biến bí mật của project; tham chiếu tới biến bí mật làm render thất bại với thông báo rõ. Việc lọc dựa trên độ bí mật sau khi giải, không dựa trên cờ `is_secret` của dòng app. Env bí mật của app và `DATABASE_URL` từ liên kết database (phase 7) không bao giờ được kế thừa."
+          },
+          {
+           "text": "Secret và network: secret preview là Swarm secret tiền tố `bn-prev-`; không gắn preview vào `bn-db-<id>`. Preview chạy trong overlay `bn-projprev-<project>` của cụm (không attachable) với subnet cấp từ dải dành riêng cho preview của cụm (mặc định `10.240.0.0/12`); Traefik được gắn vào network này một lần cho mỗi project trong cụm (cùng đánh đổi rolling restart đã chấp nhận ở phase 4)."
+          },
+          {
+           "text": "Không đi vòng qua Traefik: agent ingress thêm `&& !ClientIP(\\`<dải preview>\\`)` vào rule của mọi router không phải preview, nên container preview gửi request tới Traefik với header `Host` của app production (kể cả entrypoint HTTP nội bộ của tunnel) chỉ nhận 404. Cú pháp `ClientIP` và phủ định `!` có trong tài liệu rule của Traefik v3 (khớp theo IP kết nối, không theo `X-Forwarded-For`) [UNVERIFIED: Traefik thấy IP overlay của task preview làm client IP khi đi qua VIP của Swarm; kiểm trong lab]."
+          },
+          {
+           "text": "Chính sách kiểm duyệt workload của phase 5 áp nguyên vẹn; cờ `privileged` của app không được chuyển sang preview."
+          },
+          {
+           "text": "Mỗi preview là một Swarm service `bn-prev-<app-id>-<pr>` sinh qua `servicespec`. Deployment preview đi qua state machine, snapshot và bộ điều phối build của phase 5 với khoá `(app_id, preview_id)`. Bộ điều phối xếp production trước preview; preview đã chờ quá 30 phút được xếp ngang production để không chờ mãi. Commit mới trên PR làm build preview cũ chưa tới `rolling_out` thành `superseded`."
+          },
+          {
+           "text": "Gỡ preview là một mục trong cùng hàng đợi `(app_id, preview_id)`: trước hết chuyển mọi deployment chưa kết thúc của preview sang `cancelling` (phase 5), rồi xoá service, secret `bn-prev-*`, dòng `domains` (agent ingress bỏ route; với tunnel thì xoá CNAME và dựng lại cấu hình tunnel), đặt preview thành `removed` (tombstone). Kết quả đến sau cho một preview `removed` bị bỏ và agent được yêu cầu xoá service nếu nó còn. Image preview được đánh dấu để dọn và không tính vào quota giữ image của production."
+          },
+          {
+           "text": "Khi nào gỡ: PR `closed` (kể cả merge); người dùng tắt preview của app; xoá app; đổi repo hoặc branch của app; xoá kết nối provider."
+          },
+          {
+           "text": "Quét dọn mỗi giờ (River periodic job): với mỗi preview đang hoạt động, gọi `GetPullRequest`: PR đã đóng → gỡ; 404/401/403 (repo chuyển, installation bị thu hồi) → gỡ và ghi lý do; lỗi 5xx hoặc timeout → bỏ qua lượt này. Đồng thời gỡ mọi service `bn-prev-*` trong cụm không ứng với preview đang hoạt động."
+          },
+          {
+           "text": "Dọn tài nguyên cấp zone: khi cụm không còn app nào của project bật preview, hoặc project bị xoá, hoặc admin xoá zone: tách Traefik khỏi `bn-projprev-<project>`, xoá network, xoá record wildcard, xoá cert wildcard (ngừng gia hạn)."
+          },
+          {
+           "text": "Commit status: context riêng `bennghe/preview`: `pending` khi bắt đầu, `success` với target URL là URL preview, `failure` khi lỗi hoặc bị cổng từ chối, `error` \"đã huỷ\" khi bị huỷ; không đụng tới status của deployment production."
+          },
+          {
+           "text": "RBAC/audit/sự kiện: route cấu hình preview, preview zone (admin), env preview, xoá preview tay, xem log preview có `x-permission` + `audit.Record`; xem log preview dùng action đọc nhạy cảm như log app. Phát `preview.deployed|failed|removed` qua `events.Emit`; phase 8 đã có kênh thông báo nên chỉ cần thêm loại sự kiện vào quy tắc."
+          },
+          {
+           "text": "UI: tab Preview trong trang app (bật/tắt, limit, env preview, danh sách preview với PR, tác giả, trạng thái, URL, nút xoá); cấu hình preview zone theo cụm trong trang project (admin)."
+          }
+         ]
+        },
+        {
+         "type": "code",
+         "language": "go",
+         "title": "Interface",
+         "text": "  ParsePullRequestEvent(r *http.Request, secret []byte) (PREvent, error) // opened|synchronize|reopened|closed; mang head_sha, head repo, author, sender\n  CanWrite(ctx, conn, repo, username string) (bool, error)\n  GetPullRequest(ctx, conn, repo string, number int) (PRState, error)   // dùng cho quét dọn và kiểm head trước khi clone"
+        },
+        {
+         "type": "code",
+         "language": "text",
+         "title": "File tạo / sửa",
+         "text": "Create: internal/cp/previews/ (cổng chấp nhận, vòng đời, gỡ, quét dọn, dọn zone), migrations/<timestamp>_previews.sql (app_preview_settings, app_preview_env, previews, project_preview_zones, deployments.preview_id, enum domains.owner_type=preview, enum tls_mode=preview_zone)\nModify: internal/cp/gitprovider/provider.go, internal/cp/gitprovider/{github,gitlab,gitea}/ (sự kiện PR, CanWrite, GetPullRequest), internal/cp/webhooks/ (bộ xử lý sự kiện PR, khoá khử trùng PR), internal/cp/deploy/ (khoá (app_id, preview_id), lọc production, ưu tiên và aging trong bộ điều phối, kiểm head trước khi clone), internal/cp/envref/ (chế độ preview), internal/cp/servicespec/ (spec preview, network bn-projprev-* với subnet dành riêng), internal/cp/domains/ (owner preview, bỏ qua record A), internal/cp/routing/ (rule !ClientIP cho router production), internal/cp/certs/ (cert wildcard theo zone, preview_zone), internal/cp/cloudflare/ (record wildcard, CNAME tunnel), internal/cp/tunnel/ (hostname preview), internal/cp/registry/ (repo preview/*, quyền push riêng, dọn image preview)\nModify: internal/agent/build/ (buildkitd preview riêng, fetch ref PR + checkout SHA), internal/agent/ingress/, internal/agent/cleanup/ (giữ image preview đang chạy)\nModify: proto/agent/v1/agent.proto, api/openapi.yaml, internal/cp/rbac/policy.go, web/src/routes/apps/*/previews*, web/src/routes/projects/*/settings*"
+        },
+        {
+         "type": "list",
+         "title": "Các bước",
+         "items": [
+          {
+           "text": "Migration; `deployments.preview_id` và lọc production trong mọi truy vấn của `internal/cp/deploy/` (test hồi quy rollback)."
+          },
+          {
+           "text": "Preview zone theo (project, cụm): direct (cert + record wildcard) và tunnel (suffix = apex, CNAME riêng); chặn registrable domain của control plane."
+          },
+          {
+           "text": "Mở rộng `Provider` (sự kiện PR, `CanWrite`, `GetPullRequest`) cho GitHub/GHES, GitLab, Gitea; contract test bằng fixture có hai tài khoản (tác giả và người đẩy)."
+          },
+          {
+           "text": "Bộ xử lý webhook PR, khoá khử trùng PR, cổng chấp nhận (tác giả + sender, limit có khoá dòng), ghim SHA."
+          },
+          {
+           "text": "Build cách ly: buildkitd preview, cache-key riêng, repo `preview/*`, secret build từ env preview."
+          },
+          {
+           "text": "Spec preview: env chế độ preview, secret `bn-prev-*`, network với subnet dành riêng, rule `!ClientIP` cho router production."
+          },
+          {
+           "text": "Nối vào bộ điều phối của phase 5 (ưu tiên, aging, supersede, kiểm head trước clone)."
+          },
+          {
+           "text": "Gỡ preview qua hàng đợi + tombstone; các điểm kích hoạt gỡ; quét dọn; dọn tài nguyên zone."
+          },
+          {
+           "text": "Commit status `bennghe/preview`; sự kiện; RBAC/audit."
+          },
+          {
+           "text": "UI tab Preview và cấu hình preview zone."
+          }
+         ]
+        },
+        {
+         "type": "checklist",
+         "title": "Todo",
+         "items": [
+          {
+           "text": "`deployments.preview_id` + lọc production ở mọi quy tắc phase 5/6",
+           "done": false
+          },
+          {
+           "text": "Preview zone theo (project, cụm): direct và tunnel, chặn registrable domain của control plane",
+           "done": false
+          },
+          {
+           "text": "`Provider`: sự kiện PR, `CanWrite`, `GetPullRequest` (3 provider)",
+           "done": false
+          },
+          {
+           "text": "Webhook PR, khoá khử trùng PR, cổng chấp nhận tác giả + sender, ghim SHA",
+           "done": false
+          },
+          {
+           "text": "Build cách ly (buildkitd preview, cache, repo, secret build)",
+           "done": false
+          },
+          {
+           "text": "Spec preview cách ly (env, secret, network, `!ClientIP`)",
+           "done": false
+          },
+          {
+           "text": "Nối bộ điều phối (ưu tiên, aging, supersede, kiểm head)",
+           "done": false
+          },
+          {
+           "text": "Gỡ preview qua hàng đợi, quét dọn, dọn zone",
+           "done": false
+          },
+          {
+           "text": "Commit status, sự kiện, RBAC/audit cho route mới",
+           "done": false
+          },
+          {
+           "text": "UI",
+           "done": false
+          }
+         ]
+        },
+        {
+         "type": "list",
+         "title": "Tiêu chí thành công",
+         "items": [
+          {
+           "text": "Mở PR từ branch của collaborator trên mỗi provider (GitHub.com, GHES, GitLab, Gitea; Forgejo best-effort): preview HTTPS chạy tại hostname preview và commit status `bennghe/preview` chuyển `success` với URL preview; làm được trên cả một cụm `direct` và một cụm `tunnel`.",
+           "badge": "gate"
+          },
+          {
+           "text": "Đẩy commit mới lên PR: preview cập nhật về SHA mới; build cũ chưa `rolling_out` bị `superseded`.",
+           "badge": "gate"
+          },
+          {
+           "text": "PR từ fork của người không có quyền ghi: không build. PR của collaborator nhưng commit mới do một tài khoản không có quyền ghi repo gốc đẩy vào fork: commit đó không được build và commit status báo bị từ chối.",
+           "badge": "gate"
+          },
+          {
+           "text": "Đẩy commit Y ngay sau khi commit X qua cổng: deployment của X không bao giờ build mã của Y.",
+           "badge": "gate"
+          },
+          {
+           "text": "Preview `healthy`, sau đó deployment production lỗi và Swarm tự rollback: production quay về snapshot production trước đó, không phải snapshot preview.",
+           "badge": "gate"
+          },
+          {
+           "text": "Một PR ghi dữ liệu vào cache mount (`--mount=type=cache`) và cache layer: build production kế tiếp cho ra cùng digest như khi không có PR đó; bước build của preview không đọc được secret build nào của production.",
+           "badge": "gate"
+          },
+          {
+           "text": "Từ bên trong container preview: không kết nối được tới service production hay database đã liên kết; gửi request tới Traefik với header `Host` của app production nhận 404; `docker service inspect` của preview không tham chiếu secret nào của app production; app production có env `${{project.API_KEY}}` (bí mật) và env preview khai báo `API_KEY` thì preview nhận giá trị trong env preview, không phải giá trị của project.",
+           "badge": "gate"
+          },
+          {
+           "text": "Đạt `limit` (3), mở đồng thời hai PR mới: không bao giờ có quá 3 preview hoạt động.",
+           "badge": "gate"
+          },
+          {
+           "text": "Đóng PR khi build preview đang chạy: build bị huỷ, không có service `bn-prev-*` nào còn lại sau 1 phút. Tắt control plane lúc đóng PR rồi bật lại: quét dọn gỡ preview trong vòng 1 giờ.",
+           "badge": "gate"
+          },
+          {
+           "text": "Tạo 5 preview liên tiếp trên cụm `direct` không phát sinh yêu cầu ACME mới nào sau cert wildcard đầu tiên; tắt preview của app cuối cùng trong cụm thì record wildcard, cert wildcard và network `bn-projprev-*` bị xoá.",
+           "badge": "gate"
+          },
+          {
+           "text": "Cấu hình preview zone dưới registrable domain của control plane: lưu được nhưng UI hiện cảnh báo rủi ro cùng site.",
+           "badge": "gate"
+          },
+          {
+           "text": "Không có build preview trong 10 phút: container `bn-buildkitd-preview` dừng; build preview kế tiếp tự khởi động lại nó.",
+           "badge": "gate"
+          }
+         ]
+        },
+        {
+         "type": "list",
+         "title": "Kiểm chứng",
+         "items": [
+          {
+           "text": "Contract test bằng fixture cho sự kiện PR, `CanWrite` (tác giả và sender khác nhau) và `GetPullRequest` của cả ba provider trong CI."
+          },
+          {
+           "text": "Test sống: Gitea container trong CI (PR từ branch, từ fork của người không có quyền ghi, và commit do tài khoản ngoài đẩy vào fork của collaborator); GitHub org thử và GitLab CE trong job nightly; GHES trial chạy tay trước khi đóng phase."
+          },
+          {
+           "text": "Lab Incus: cách ly network, rule `!ClientIP`, secret, cache build, rollback production sau preview; một zone Cloudflare thử cho chế độ tunnel."
+          }
+         ]
+        },
+        {
+         "type": "list",
+         "title": "Rủi ro & bảo mật",
+         "items": [
+          {
+           "text": "Người có quyền ghi bị chiếm tài khoản hoặc cố ý đẩy mã độc vẫn chạy được mã trên buildkitd preview và trong `bn-projprev-*`. Phản ứng: buildkitd riêng, không có secret production, chính sách kiểm duyệt; ghi rõ trong `docs/security-model.md` (phase 12) rằng bật preview nghĩa là tin mọi người có quyền ghi vào repo."
+          },
+          {
+           "text": "Preview ngốn tài nguyên VPS nhỏ. Phản ứng: giới hạn mặc định 3 preview, hồ sơ 0.5 CPU / 512 MB, build preview xếp sau production."
+          },
+          {
+           "text": "Quyền App GitHub cho endpoint permission chưa xác nhận. Tín hiệu: contract test với org thử trả 403. Phản ứng: thêm quyền tối thiểu cần thiết vào manifest của phase 6 trước khi phát hành alpha có GitHub App."
+          },
+          {
+           "text": "`ClientIP` không thấy IP overlay của task preview (ví dụ do NAT của VIP). Tín hiệu: test trong lab vẫn tới được app production qua Traefik. Phản ứng: chạy một Traefik riêng cho preview chỉ gắn vào các network `bn-projprev-*` và chỉ phục vụ hostname preview; hỏi người dùng vì cần thêm port."
+          },
+          {
+           "text": "Zone tunnel bắt suffix là apex làm hostname preview nằm ngay dưới domain chính. Đây là hệ quả của giới hạn Universal SSL; người dùng có Advanced Certificate Manager có thể muốn nới, nhưng v1 không làm."
+          },
+          {
+           "text": "Traefik rolling restart khi project bật preview lần đầu trong cụm (gắn `bn-projprev-*`). Cùng đánh đổi người dùng đã chấp nhận ở Validation Session 1."
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "title": "Phase 12 · E2E & Release · 3.5w",
        "blocks": [
         {
          "type": "key-value",
@@ -2550,15 +3080,15 @@
           },
           {
            "key": "Effort",
-           "value": "3w"
+           "value": "3.5w"
           },
           {
            "key": "Phụ thuộc",
-           "value": "1, 2, 3, 4, 5, 6, 7, 8, 9, 10"
+           "value": "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11"
           },
           {
            "key": "File",
-           "value": "phase-11-e2e-release.md"
+           "value": "phase-12-e2e-release.md"
           }
          ]
         },
@@ -2572,7 +3102,7 @@
          "title": "Yêu cầu",
          "items": [
           {
-           "text": "E2E: `test/e2e/` là Go test gọi API control plane, chạy trên lab Incus (dựng từ phase 1); job nightly trên GitHub Actions dùng 3 VPS thật thuộc 2 nhà cung cấp, tạo và huỷ bằng `test/nightly/provision.sh` (CLI của nhà cung cấp, token trong secret của repo). Mỗi kịch bản ứng với một tiêu chí Done trong plan.md, cộng các kịch bản hỏng hóc từ red-team: restore control plane từ backup cũ (agent vào chế độ nhận lại, không mất peer/service); reboot manager khi control plane offline; tắt đồng thời build node và một node app; hai push liên tiếp vào cùng app; agent N-2 nâng cấp qua kênh chỉ-cập-nhật."
+           "text": "E2E: `test/e2e/` là Go test gọi API control plane, chạy trên lab Incus (dựng từ phase 1); job nightly trên GitHub Actions dùng 3 VPS thật thuộc 2 nhà cung cấp, tạo và huỷ bằng `test/nightly/provision.sh` (CLI của nhà cung cấp, token trong secret của repo). Mỗi kịch bản ứng với một tiêu chí Done trong plan.md, cộng các kịch bản hỏng hóc từ red-team: restore control plane từ backup cũ (agent vào chế độ nhận lại, không mất peer/service); reboot manager khi control plane offline; tắt đồng thời build node và một node app; hai push liên tiếp vào cùng app; agent N-2 nâng cấp qua kênh chỉ-cập-nhật; PR của collaborator tạo preview, PR từ fork của người không có quyền ghi bị từ chối, commit do tài khoản ngoài đẩy vào fork của collaborator bị từ chối, production lỗi sau một preview `healthy` thì rollback về snapshot production, đóng PR gỡ preview (phase 11); nightly cần thêm một tài khoản không có quyền ghi trên mỗi provider; CI dùng API token deploy một app; token thiếu scope bị 403 (phase 1)."
           },
           {
            "text": "Phát hành: goreleaser build control plane + agent + healthcheck + envexec cho amd64 và arm64; image control plane và ops image lên GHCR; ký minisign (đã chốt ở phase 2) và đăng checksum + chữ ký + `install-agent.sh` lên GitHub Releases; CHANGELOG."
@@ -2584,7 +3114,7 @@
            "text": "Tương thích: test agent bản N-1 kết nối control plane bản N; migration chỉ đi tiến."
           },
           {
-           "text": "Tài liệu (`docs/`): cài đặt, thêm node, mô hình bảo mật (agent = root trên node, control plane bị chiếm thì node bị chiếm), backup control plane (pg_dump + master key), recovery kit, runbook khôi phục Swarm mất quorum, giới hạn đã biết (database không HA, cron không chạy bù, node sau NAT hai phía)."
+           "text": "Tài liệu (`docs/`): cài đặt, thêm node, mô hình bảo mật (agent = root trên node, control plane bị chiếm thì node bị chiếm), backup control plane (pg_dump + master key), recovery kit, runbook khôi phục Swarm mất quorum, giới hạn đã biết (database không HA, cron không chạy bù, node sau NAT hai phía, preview chỉ cho app (không cho stack, không sao chép database), cảnh báo CPU/RAM cần control plane online)."
           },
           {
            "text": "README: điểm khác biệt so với Coolify/Dokploy: agent kết nối ra (không SSH key, chạy sau NAT), đa cụm, agent nhẹ, cron/backup chạy khi control plane offline."
@@ -2595,7 +3125,7 @@
          "type": "code",
          "language": "text",
          "title": "File tạo / sửa",
-         "text": "Create: test/e2e/*, test/nightly/provision.sh, test/nightly/teardown.sh, .github/workflows/nightly-e2e.yml, .github/workflows/release.yml, .goreleaser.yaml, deploy/upgrade-controlplane.sh\nCreate: docs/installation.md, docs/upgrade.md, docs/security-model.md (agent = root trên node; project là ranh giới cách ly; chính sách kiểm duyệt; khoá control plane), docs/backup-and-recovery.md (kể cả restore control plane và chế độ nhận lại), docs/runbooks/swarm-quorum-loss.md, docs/known-limitations.md\nModify: README.md"
+         "text": "Create: test/e2e/*, test/nightly/provision.sh, test/nightly/teardown.sh, .github/workflows/nightly-e2e.yml, .github/workflows/release.yml, .goreleaser.yaml, deploy/upgrade-controlplane.sh\nCreate: docs/installation.md, docs/upgrade.md, docs/security-model.md (agent = root trên node; project là ranh giới cách ly; chính sách kiểm duyệt; khoá control plane; 2FA, xác thực lại và API token, lệnh controlplane admin reset-2fa khi owner mất 2FA; bật preview nghĩa là tin mọi người có quyền ghi vào repo), docs/backup-and-recovery.md (kể cả restore control plane và chế độ nhận lại), docs/runbooks/swarm-quorum-loss.md, docs/known-limitations.md\nModify: README.md"
         },
         {
          "type": "list",
@@ -2711,7 +3241,7 @@
        "done": false
       },
       {
-       "text": "Cụm 3 node trên 2 nhà cung cấp chạy app replicas=3; tắt 1 node thì Swarm dời replica.",
+       "text": "Cụm 3 node trên 2 nhà cung cấp chạy app `replicas=3`; tắt 1 node thì Swarm dời replica.",
        "done": false
       },
       {
@@ -2745,6 +3275,18 @@
       {
        "text": "Tắt control plane 10 phút: app, cron, backup vẫn chạy; agent tự kết nối lại và đồng bộ.",
        "done": false
+      },
+      {
+       "text": "Owner/admin đăng nhập bằng 2FA; tải recovery kit đòi xác thực lại; CI deploy được bằng API token có scope project.",
+       "done": false
+      },
+      {
+       "text": "PR của collaborator có preview HTTPS riêng không chạm secret hay network production; PR từ fork của người không có quyền ghi không được build; đóng PR thì preview bị gỡ.",
+       "done": false
+      },
+      {
+       "text": "Push chỉ sửa file ngoài `watch_paths` không tạo deployment; dọn Docker giữ đĩa node dưới ngưỡng mà không xoá image đang cần.",
+       "done": false
       }
      ]
     },
@@ -2752,7 +3294,7 @@
      "type": "callout",
      "tone": "warning",
      "title": "Ngoài phạm vi",
-     "text": "SaaS đa khách hàng, billing, Kubernetes, autoscaling, DNS provider ngoài Cloudflare, HA cho control plane/database/registry, relay cho node sau NAT hai phía, Prometheus/Loki/Grafana, xuất CSV audit, rollup metrics dài hạn."
+     "text": "SaaS đa khách hàng, billing, Kubernetes, autoscaling, DNS provider ngoài Cloudflare, HA cho control plane/database/registry, relay cho node sau NAT hai phía, Prometheus/Loki/Grafana, xuất CSV audit, rollup metrics dài hạn; preview cho stack compose và sao chép database cho preview; các mục Dokploy không được chọn (backup tự động control plane, middleware redirect/basic auth, terminal container, kiểm tra bảo mật node, kênh Discord/ntfy) — ứng viên v1.1."
     }
    ]
   },
@@ -2804,6 +3346,30 @@
        "impact": "high",
        "likelihood": "medium",
        "note": "Buffer 20%, mốc alpha để có phản hồi sớm."
+      },
+      {
+       "area": "Người có quyền ghi repo đẩy mã độc vào preview",
+       "impact": "high",
+       "likelihood": "low",
+       "note": "buildkitd preview riêng, không secret production, kiểm cả tác giả lẫn người đẩy, ghim SHA."
+      },
+      {
+       "area": "Preview ngốn tài nguyên VPS nhỏ",
+       "impact": "medium",
+       "likelihood": "medium",
+       "note": "Tối đa 3 preview, 0.5 CPU / 512 MB, build preview xếp sau production."
+      },
+      {
+       "area": "Traefik không thấy IP overlay của preview (ClientIP)",
+       "impact": "high",
+       "likelihood": "low",
+       "note": "Kiểm trong lab; nếu hỏng thì Traefik riêng cho preview, hỏi người dùng."
+      },
+      {
+       "area": "Effort tăng lên ~47 tuần",
+       "impact": "medium",
+       "likelihood": "medium",
+       "note": "Mốc alpha giữ phản hồi sớm; preview là phase riêng có thể dời nếu cần (người dùng quyết)."
       }
      ]
     }
@@ -2934,7 +3500,134 @@
   },
   {
    "type": "section",
-   "title": "Validate (Session 1)",
+   "title": "Red-team phần bổ sung Dokploy (2026-11-26)",
+   "blocks": [
+    {
+     "type": "text",
+     "text": "40 phát hiện thô từ 4 reviewer, gộp thành 15 (3 Critical, 9 High, 3 Medium); người dùng chọn áp dụng cả 15. Marker trong phase: Red Team (Dokploy): n."
+    },
+    {
+     "type": "table",
+     "columns": [
+      "#",
+      "Phát hiện",
+      "Mức",
+      "Kết luận",
+      "Áp vào"
+     ],
+     "rows": [
+      [
+       "1",
+       "deployments không phân biệt preview/production: rollback, supersede, giữ secret, base watch paths có thể chọn snapshot của PR",
+       "Critical",
+       "Accept",
+       "Phase 5, 11"
+      ],
+      [
+       "2",
+       "Cổng PR kiểm tác giả chứ không kiểm người đẩy; build ref di động thay vì SHA đã kiểm; cache quyền mâu thuẫn",
+       "Critical",
+       "Accept",
+       "Phase 11"
+      ],
+      [
+       "3",
+       "Build preview dùng chung cache/secret build với production",
+       "Critical",
+       "Accept",
+       "Phase 11"
+      ],
+      [
+       "4",
+       "Preview zone một wildcard cho cả project nhiều cụm; Tunnel lộ IP và vượt độ sâu Universal SSL; dòng domain preview đi qua luồng cert/DNS từng domain",
+       "High",
+       "Accept",
+       "Phase 4, 11"
+      ],
+      [
+       "5",
+       "Webhook phase 6 không đăng ký/không xử lý sự kiện PR; khoá khử trùng nuốt sự kiện PR",
+       "High",
+       "Accept",
+       "Phase 6, 11"
+      ],
+      [
+       "6",
+       "Gỡ preview đua với deployment, không dọn tài nguyên zone, quét dọn không xử lý lỗi",
+       "High",
+       "Accept",
+       "Phase 11"
+      ],
+      [
+       "7",
+       "Ngoại lệ ${{project.X}} cho preview có thể lộ secret production",
+       "High",
+       "Accept",
+       "Phase 11"
+      ],
+      [
+       "8",
+       "Cert tải lên có SAN của project khác chiếm TLS của họ",
+       "High",
+       "Accept",
+       "Phase 4"
+      ],
+      [
+       "9",
+       "API token giữ vai trò cũ, né 2FA bắt buộc, scope chưa đủ; danh sách reauth không có chủ; owner mất 2FA không có lối thoát",
+       "High",
+       "Accept",
+       "Phase 1, 2, 5, 7, 9, 12"
+      ],
+      [
+       "10",
+       "Backup volume dừng service cần desired state có chữ ký nên hỏng khi control plane offline",
+       "High",
+       "Accept",
+       "Phase 7, 8"
+      ],
+      [
+       "11",
+       "Hàng đợi build thiếu bộ điều phối; rollback bị chặn; huỷ đua với kết quả trễ; rò slot; commit status/sự kiện thiếu cancelled; log trực tiếp có thể mất",
+       "High",
+       "Accept",
+       "Phase 5, 6, 9, 11"
+      ],
+      [
+       "12",
+       "Dọn Docker: khoá GC BuildKit sai, danh sách giữ lại thiếu, không có cooldown",
+       "High",
+       "Accept",
+       "Phase 5"
+      ],
+      [
+       "13",
+       "Preview gọi production qua Traefik bằng Host giả; preview cùng site với control plane",
+       "Medium",
+       "Accept",
+       "Phase 1, 11"
+      ],
+      [
+       "14",
+       "Snapshot giải lại biến project khi rollback; watch paths thiếu kiểm tổ tiên, giới hạn 300 file, file đổi tên",
+       "Medium",
+       "Accept",
+       "Phase 5, 6, 8"
+      ],
+      [
+       "15",
+       "Dependencies phase 11, tham chiếu cũ, effort phase 12, watch paths cho stack; bỏ tuỳ chọn không được yêu cầu (required_label, giờ dọn/% cấu hình được, UI \"cần redeploy\", gỡ theo tuổi, *_recovered, preview.rejected)",
+       "Medium",
+       "Accept",
+       "Phase 4, 5, 8, 9, 11, 12, plan.md"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "type": "section",
+   "title": "Validate",
    "blocks": [
     {
      "type": "table",
@@ -2970,6 +3663,18 @@
       [
        "Tên sản phẩm",
        "Bennghe (prefix bn)"
+      ],
+      [
+       "Zone preview cùng registrable domain với control plane (Session 2)",
+       "Chỉ cảnh báo, không chặn"
+      ],
+      [
+       "buildkitd preview (Session 2)",
+       "Bật khi cần, dừng sau 10 phút rảnh"
+      ],
+      [
+       "Push trong lúc backup volume tạm dừng service (Session 2)",
+       "Deploy chờ backup xong"
       ]
      ]
     }
@@ -2999,7 +3704,15 @@
        "badge": "unverified"
       },
       {
-       "text": "Kiểm tra tên Bennghe còn trống (GitHub, domain, GHCR) trước phase 11.",
+       "text": "Kiểm phase 11 trên org thử: quyền tối thiểu của GitHub App cho endpoint collaborator permission.",
+       "badge": "unverified"
+      },
+      {
+       "text": "Kiểm phase 11 trong lab: Traefik thấy IP overlay của task preview qua VIP (rule !ClientIP).",
+       "badge": "unverified"
+      },
+      {
+       "text": "Kiểm tra tên Bennghe còn trống (GitHub, domain, GHCR) trước phase 12.",
        "badge": "todo"
       }
      ]
@@ -3048,6 +3761,30 @@
       ],
       [
        "https://developers.cloudflare.com/network/websockets/"
+      ],
+      [
+       "https://github.com/dokploy/dokploy (commit 6b02c8d5, Apache-2.0 ngoài /proprietary)"
+      ],
+      [
+       "https://doc.traefik.io/traefik/reference/routing-configuration/http/routing/rules-and-priority/"
+      ],
+      [
+       "https://docs.gitlab.com/user/project/integrations/webhook_events/#merge-request-events"
+      ],
+      [
+       "https://docs.gitea.com/usage/webhooks"
+      ],
+      [
+       "https://docs.gitea.com/api/1.22/"
+      ],
+      [
+       "https://docs.github.com/en/rest/commits/commits#compare-two-commits"
+      ],
+      [
+       "https://developers.cloudflare.com/ssl/edge-certificates/universal-ssl/limitations/"
+      ],
+      [
+       "https://github.com/moby/buildkit/blob/master/docs/buildkitd.toml.md"
       ]
      ]
     },
